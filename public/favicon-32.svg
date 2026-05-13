@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <title>Outreach Medical favicon</title>
+  <rect x="0" y="0" width="32" height="32" rx="6" fill="#185FA5"/>
+  <rect x="4" y="13" width="24" height="7" rx="2" fill="#ffffff"/>
+  <rect x="13" y="4" width="7" height="24" rx="2" fill="#ffffff"/>
+  <polyline points="0,22 6,22 9,16 12,28 15,22 32,22"
+    fill="none" stroke="#1D9E75" stroke-width="2.2"
+    stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

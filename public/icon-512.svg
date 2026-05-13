@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <title>Outreach Medical icon</title>
+  <rect x="0" y="0" width="512" height="512" rx="104" fill="#185FA5"/>
+  <rect x="64" y="208" width="384" height="112" rx="20" fill="#ffffff"/>
+  <rect x="200" y="64" width="112" height="384" rx="20" fill="#ffffff"/>
+  <polyline points="0,356 96,356 144,260 192,452 240,356 512,356"
+    fill="none" stroke="#1D9E75" stroke-width="28"
+    stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
