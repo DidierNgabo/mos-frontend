@@ -15,6 +15,8 @@ import * as PrescriptionsSource from './PrescriptionsSource';
 import * as PHQ9ScreeningsSource from './PHQ9ScreeningsSource';
 import * as GAD7ScreeningsSource from './GAD7ScreeningsSource';
 import * as PCL5ScreeningsSource from './PCL5ScreeningsSource';
+import * as TeamsSource from './TeamsSource';
+import * as StatsSource from './StatsSource';
 
 import { processRequest } from './processor';
 
@@ -36,5 +38,7 @@ export {
   PHQ9ScreeningsSource,
   GAD7ScreeningsSource,
   PCL5ScreeningsSource,
+  TeamsSource,
+  StatsSource,
   processRequest,
 };

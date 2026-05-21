@@ -16,6 +16,7 @@ export type Subject =
   | 'PHQ9Screening'
   | 'GAD7Screening'
   | 'PCL5Screening'
+  | 'Team'
   | 'all';
 
 export interface Ability {
@@ -40,7 +41,7 @@ export function buildAbilityFor(roles: string[]): Ability {
     grant('manage', 'all');
   } else {
     if (has('OUTREACH_ADMIN')) {
-      grant('manage', ['Outreach', 'Station', 'Patient', 'PharmacyStock', 'VitalSign', 'QueueEntry', 'Observation', 'LabResult', 'CommunicableDisease', 'Transfer', 'Prescription']);
+      grant('manage', ['Outreach', 'Station', 'Team', 'Patient', 'PharmacyStock', 'VitalSign', 'QueueEntry', 'Observation', 'LabResult', 'CommunicableDisease', 'Transfer', 'Prescription']);
       grant(['create', 'read', 'update'], 'User');
       grant('read', 'Role');
     }
@@ -52,7 +53,7 @@ export function buildAbilityFor(roles: string[]): Ability {
     }
 
     if (hasAny(CLINICAL_READ_ONLY)) {
-      grant('read', ['Outreach', 'User', 'Station', 'Patient', 'PharmacyStock', 'VitalSign']);
+      grant('read', ['Outreach', 'User', 'Station', 'Team', 'Patient', 'PharmacyStock', 'VitalSign']);
     }
 
     if (has('NURSE') || has('DOCTOR')) {
@@ -60,7 +61,7 @@ export function buildAbilityFor(roles: string[]): Ability {
     }
 
     if (has('DATA_CLERK')) {
-      grant('read', ['Outreach', 'User', 'Station']);
+      grant('read', ['Outreach', 'User', 'Station', 'Team']);
       grant(['create', 'read', 'update'], 'Patient');
       grant(['create', 'read'], 'QueueEntry');
     }

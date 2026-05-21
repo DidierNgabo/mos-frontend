@@ -21,6 +21,7 @@ export interface User {
   firstName: string;
   lastName: string;
   email: string;
+  phone: string | null;
   isActive: boolean;
   roles: UserRole[];
   station: UserStation | null;

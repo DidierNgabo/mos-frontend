@@ -31,6 +31,8 @@ import {
   Check,
   Pill,
   ListOrdered,
+  UsersRound,
+  FileText,
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/app/components/ui/button';
@@ -78,6 +80,12 @@ const navItems: {
     allowedRoles: ['SUPER_ADMIN', 'OUTREACH_ADMIN'],
   },
   {
+    href: '/teams',
+    label: 'Teams',
+    icon: UsersRound,
+    allowedRoles: ['SUPER_ADMIN', 'OUTREACH_ADMIN', 'NURSE', 'DOCTOR', 'DATA_CLERK', 'PHARMACIST'],
+  },
+  {
     href: '/vital-signs',
     label: 'Vital Signs',
     icon: HeartPulse,
@@ -111,6 +119,12 @@ const navItems: {
     href: '/roles',
     label: 'Roles',
     icon: ShieldCheck,
+    allowedRoles: ['SUPER_ADMIN', 'OUTREACH_ADMIN'],
+  },
+  {
+    href: '/reports',
+    label: 'Reports',
+    icon: FileText,
     allowedRoles: ['SUPER_ADMIN', 'OUTREACH_ADMIN'],
   },
 ];
