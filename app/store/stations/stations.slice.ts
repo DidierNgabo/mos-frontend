@@ -26,7 +26,7 @@ const stationsSlice = createSlice({
       .addCase(fetchStations.fulfilled, (state, { payload }) => {
         state.isLoadingStations = false;
         state.list = payload?.items || [];
-        state.totalNumItems = payload?.totalNumItems || 0;
+        state.totalNumItems = payload?.paginationInfo?.totalNumItems || 0;
       })
       .addCase(fetchStations.rejected, (state, action) => {
         state.isLoadingStations = false;

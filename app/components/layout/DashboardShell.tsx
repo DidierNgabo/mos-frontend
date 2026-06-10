@@ -5,7 +5,6 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useRouter } from 'next/navigation';
-import { AuthSource } from '@/app/source';
 import { useAppDispatch, useAppSelector } from '@/app/hooks/redux';
 import { logoutUser } from '@/app/store/auth';
 import {
@@ -33,6 +32,7 @@ import {
   ListOrdered,
   UsersRound,
   FileText,
+  HeartHandshake,
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/app/components/ui/button';
@@ -126,6 +126,12 @@ const navItems: {
     label: 'Reports',
     icon: FileText,
     allowedRoles: ['SUPER_ADMIN', 'OUTREACH_ADMIN'],
+  },
+  {
+    href: '/evangelism',
+    label: 'Evangelism',
+    icon: HeartHandshake,
+    allowedRoles: ['SUPER_ADMIN', 'OUTREACH_ADMIN', 'EVANGELIST'],
   },
 ];
 
@@ -280,8 +286,7 @@ export default function DashboardShell({
   const handleSignOut = async () => {
     dispatch(clearOutreachContext());
     await dispatch(logoutUser());
-    await AuthSource.logout();
-    router.push('/login');
+    window.location.href = '/login';
   };
 
   useIdleTimer({
@@ -289,8 +294,7 @@ export default function DashboardShell({
     onIdle: async () => {
       dispatch(clearOutreachContext());
       await dispatch(logoutUser());
-      await AuthSource.logout();
-      router.push('/login?reason=idle');
+      window.location.href = '/login?reason=idle';
     },
     throttle: 500,
   });

@@ -20,6 +20,7 @@ import gad7Screenings from './gad7-screenings';
 import pcl5Screenings from './pcl5-screenings';
 import teams from './teams';
 import stats from './stats';
+import evangelismRecords from './evangelism-records';
 import { RootState } from '../core/store';
 
 export const appSelector = createSelector(
@@ -48,6 +49,7 @@ const storeModules = {
   pcl5Screenings,
   teams,
   stats,
+  evangelismRecords,
 };
 
 export default storeModules;

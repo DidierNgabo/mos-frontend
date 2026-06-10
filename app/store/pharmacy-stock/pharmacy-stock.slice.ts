@@ -31,7 +31,7 @@ const pharmacyStockSlice = createSlice({
       .addCase(fetchPharmacyStocks.fulfilled, (state, { payload }) => {
         state.isLoadingPharmacyStocks = false;
         state.list = payload?.items || [];
-        state.totalNumItems = payload?.totalNumItems || 0;
+        state.totalNumItems = payload?.paginationInfo?.totalNumItems || 0;
       })
       .addCase(fetchPharmacyStocks.rejected, (state, action) => {
         state.isLoadingPharmacyStocks = false;

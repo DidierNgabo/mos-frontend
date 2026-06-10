@@ -31,6 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/app/components/ui/select';
+import { DateOfBirthPicker } from '@/app/components/ui/date-of-birth-picker';
 import { useAppDispatch, useAppSelector } from '@/app/hooks/redux';
 import { fetchOutreaches } from '@/app/store/outreaches';
 import { Patient } from '@/app/store/patients/patients.types';
@@ -314,14 +315,10 @@ export function PatientModal({
                     >
                       Date of Birth
                     </Label>
-                    <Field
-                      as={Input}
-                      id="dateOfBirth"
-                      name="dateOfBirth"
-                      type="date"
-                      max={new Date().toISOString().split('T')[0]}
+                    <DateOfBirthPicker
+                      value={values.dateOfBirth ?? ''}
+                      onChange={(v) => setFieldValue('dateOfBirth', v)}
                       disabled={isViewOnly}
-                      className={INPUT_CLS}
                     />
                     <ErrorMessage
                       name="dateOfBirth"

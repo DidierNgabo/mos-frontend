@@ -17,6 +17,7 @@ import * as GAD7ScreeningsSource from './GAD7ScreeningsSource';
 import * as PCL5ScreeningsSource from './PCL5ScreeningsSource';
 import * as TeamsSource from './TeamsSource';
 import * as StatsSource from './StatsSource';
+import * as EvangelismRecordsSource from './EvangelismRecordsSource';
 
 import { processRequest } from './processor';
 
@@ -40,5 +41,6 @@ export {
   PCL5ScreeningsSource,
   TeamsSource,
   StatsSource,
+  EvangelismRecordsSource,
   processRequest,
 };

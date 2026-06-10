@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { Button } from '@/app/components/ui/button';
@@ -26,7 +26,6 @@ const schema = Yup.object({
 });
 
 export default function LoginScreen() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
   const { isLoggingInUser, authError } = useAppSelector((s) => s.auth);
@@ -97,7 +96,7 @@ export default function LoginScreen() {
 
                 // Force password change before anything else
                 if (result.payload?.mustChangePassword) {
-                  router.push('/change-password');
+                  window.location.href = '/change-password';
                   return;
                 }
 
@@ -108,7 +107,7 @@ export default function LoginScreen() {
                   roles.includes('OUTREACH_ADMIN');
 
                 if (isAdmin) {
-                  router.push('/dashboard');
+                  window.location.href = '/dashboard';
                   return;
                 }
 
@@ -126,14 +125,14 @@ export default function LoginScreen() {
 
                   if (outreaches.length === 1) {
                     dispatch(setActiveOutreach(outreaches[0]));
-                    router.push('/dashboard');
+                    window.location.href = '/dashboard';
                   } else if (outreaches.length > 1) {
-                    router.push('/select-outreach');
+                    window.location.href = '/select-outreach';
                   } else {
-                    router.push('/dashboard');
+                    window.location.href = '/dashboard';
                   }
                 } catch {
-                  router.push('/dashboard');
+                  window.location.href = '/dashboard';
                 }
               }}
             >

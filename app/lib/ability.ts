@@ -17,6 +17,7 @@ export type Subject =
   | 'GAD7Screening'
   | 'PCL5Screening'
   | 'Team'
+  | 'EvangelismRecord'
   | 'all';
 
 export interface Ability {
@@ -41,9 +42,14 @@ export function buildAbilityFor(roles: string[]): Ability {
     grant('manage', 'all');
   } else {
     if (has('OUTREACH_ADMIN')) {
-      grant('manage', ['Outreach', 'Station', 'Team', 'Patient', 'PharmacyStock', 'VitalSign', 'QueueEntry', 'Observation', 'LabResult', 'CommunicableDisease', 'Transfer', 'Prescription']);
+      grant('manage', ['Outreach', 'Station', 'Team', 'Patient', 'PharmacyStock', 'VitalSign', 'QueueEntry', 'Observation', 'LabResult', 'CommunicableDisease', 'Transfer', 'Prescription', 'EvangelismRecord']);
       grant(['create', 'read', 'update'], 'User');
       grant('read', 'Role');
+    }
+
+    if (has('EVANGELIST')) {
+      grant(['create', 'read', 'update'], 'EvangelismRecord');
+      grant('read', ['Outreach', 'Patient']);
     }
 
     if (has('PHARMACIST')) {

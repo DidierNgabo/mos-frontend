@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -354,30 +355,30 @@ const MARITAL_OPTIONS = [
   { value: 'WIDOWED', label: 'Umupfakazi' },
 ];
 const EDUCATION_OPTIONS = [
-  { value: 'NONE', label: 'Nta mfunzo' },
-  { value: 'PRIMARY', label: 'Amashuri abanza' },
-  { value: 'SECONDARY', label: 'Amashuri yisumbuye' },
-  { value: 'TERTIARY', label: 'Amashuri makuru' },
+  { value: 'NONE', label: 'None' },
+  { value: 'PRIMARY', label: 'Primary' },
+  { value: 'SECONDARY', label: 'Secondary' },
+  { value: 'TERTIARY', label: 'Tertiary' },
 ];
 const OCCUPATION_OPTIONS = [
-  { value: 'NONE', label: 'Nta mirimo' },
-  { value: 'PRIVATE', label: 'Akazi ka Leta' },
-  { value: 'PUBLIC', label: 'Kwa senderi' },
+  { value: 'NONE', label: 'None' },
+  { value: 'PRIVATE', label: 'Private' },
+  { value: 'PUBLIC', label: 'Public' },
 ];
 const DIVISION_OPTIONS = ['I', 'II', 'III', 'IV'].map((v) => ({
   value: v,
-  label: `Intara ya ${v}`,
+  label: `${v}`,
 }));
 const LOCATION_OPTIONS = [
-  { value: 'URBAN', label: 'Umujyi' },
-  { value: 'RURAL_SEMI_URBAN', label: 'Icyaro/Icyaro gito' },
+  { value: 'URBAN', label: 'Urban' },
+  { value: 'RURAL_SEMI_URBAN', label: 'Rural/Semi-Urban' },
 ];
 const RELIGION_OPTIONS = [
-  { value: 'CATHOLIC', label: 'Gatolika' },
-  { value: 'PROTESTANT', label: 'Porotestanti' },
-  { value: 'MUSLIM', label: 'Abasilamu' },
-  { value: 'TRADITIONAL', label: "Amadini y'ikinyarwanda" },
-  { value: 'OTHER', label: 'Ayandi' },
+  { value: 'CATHOLIC', label: 'Catholic' },
+  { value: 'PROTESTANT', label: 'Protestant' },
+  { value: 'MUSLIM', label: 'Muslim' },
+  { value: 'TRADITIONAL', label: 'Traditional' },
+  { value: 'OTHER', label: 'Other' },
 ];
 
 function SelectGroup({
@@ -442,31 +443,31 @@ function StepPCL5Demographics({
         />
       </div>
       <SelectGroup
-        label="Uko uhagaze mu mibonano (Inyangamugayo)"
+        label="Marital Status"
         options={MARITAL_OPTIONS}
         value={values.maritalStatus ?? ''}
         onChange={(v) => setFieldValue('maritalStatus', v)}
       />
       <SelectGroup
-        label="Amashuri (Uburere)"
+        label="Education"
         options={EDUCATION_OPTIONS}
         value={values.educationLevel ?? ''}
         onChange={(v) => setFieldValue('educationLevel', v)}
       />
       <SelectGroup
-        label="Akazi (Umwuga)"
+        label="Occupation"
         options={OCCUPATION_OPTIONS}
         value={values.occupation ?? ''}
         onChange={(v) => setFieldValue('occupation', v)}
       />
       <SelectGroup
-        label="Intara (Division)"
+        label="Division"
         options={DIVISION_OPTIONS}
         value={values.division ?? ''}
         onChange={(v) => setFieldValue('division', v)}
       />
       <SelectGroup
-        label="Aho utuye (Akarere)"
+        label="Location"
         options={LOCATION_OPTIONS}
         value={values.locationType ?? ''}
         onChange={(v) => setFieldValue('locationType', v)}

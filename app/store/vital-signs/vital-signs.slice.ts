@@ -34,7 +34,7 @@ const vitalSignsSlice = createSlice({
       .addCase(fetchVitalSigns.fulfilled, (state, { payload }) => {
         state.isLoadingVitalSigns = false;
         state.list = payload?.items || [];
-        state.totalNumItems = payload?.totalNumItems || 0;
+        state.totalNumItems = payload?.paginationInfo?.totalNumItems || 0;
       })
       .addCase(fetchVitalSigns.rejected, (state, action) => {
         state.isLoadingVitalSigns = false;

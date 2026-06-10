@@ -26,7 +26,7 @@ const rolesSlice = createSlice({
       .addCase(fetchRoles.fulfilled, (state, { payload }) => {
         state.isLoadingRoles = false;
         state.list = payload?.items || [];
-        state.totalNumItems = payload?.totalNumItems || 0;
+        state.totalNumItems = payload?.paginationInfo?.totalNumItems || 0;
       })
       .addCase(fetchRoles.rejected, (state, action) => {
         state.isLoadingRoles = false;

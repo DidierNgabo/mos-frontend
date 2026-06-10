@@ -26,7 +26,7 @@ const patientsSlice = createSlice({
       .addCase(fetchPatients.fulfilled, (state, { payload }) => {
         state.isLoadingPatients = false;
         state.list = payload?.items || [];
-        state.totalNumItems = payload?.totalNumItems || 0;
+        state.totalNumItems = payload?.paginationInfo?.totalNumItems || 0;
       })
       .addCase(fetchPatients.rejected, (state, action) => {
         state.isLoadingPatients = false;
