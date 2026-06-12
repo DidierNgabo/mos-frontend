@@ -51,7 +51,7 @@ export function LabResultModal({ open, onOpenChange, entry, record }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px] rounded-2xl">
+      <DialogContent className="w-[calc(100vw-1rem)] max-w-none sm:max-w-[480px] rounded-2xl max-h-[calc(100dvh-1rem)] overflow-y-auto overscroll-contain p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Edit Lab Result' : 'Add Lab Result'}</DialogTitle>
           <DialogDescription>
@@ -110,7 +110,7 @@ export function LabResultModal({ open, onOpenChange, entry, record }: Props) {
                   <p className="text-xs text-destructive">{errors.testType}</p>
                 )}
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label>Result *</Label>
                   <Field as={Input} name="resultValue" placeholder="e.g. Reactive, 5.2" className="rounded-xl" />
@@ -140,9 +140,9 @@ export function LabResultModal({ open, onOpenChange, entry, record }: Props) {
                   className="w-full rounded-xl border border-border bg-white/50 dark:bg-black/50 px-3 py-2 text-sm resize-none h-16 outline-none focus:ring-2 focus:ring-primary/40"
                 />
               </div>
-              <div className="flex justify-end gap-2 pt-2">
-                <Button type="button" variant="outline" className="rounded-xl" onClick={() => onOpenChange(false)}>Cancel</Button>
-                <Button type="submit" className="rounded-xl" disabled={isSubmitting}>
+              <div className="grid grid-cols-1 gap-2 pt-2 sm:flex sm:justify-end">
+                <Button type="button" variant="outline" className="h-11 w-full rounded-xl sm:w-auto" onClick={() => onOpenChange(false)}>Cancel</Button>
+                <Button type="submit" className="h-11 w-full rounded-xl sm:w-auto" disabled={isSubmitting}>
                   {isSubmitting ? 'Saving…' : isEditing ? 'Update Result' : 'Save Result'}
                 </Button>
               </div>

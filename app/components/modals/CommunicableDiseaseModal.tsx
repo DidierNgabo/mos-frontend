@@ -39,7 +39,7 @@ export function CommunicableDiseaseModal({ open, onOpenChange, entry, record }: 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] rounded-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100vw-1rem)] max-w-none sm:max-w-[500px] rounded-2xl max-h-[calc(100dvh-1rem)] sm:max-h-[90vh] overflow-y-auto overscroll-contain p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Edit Disease Screening' : 'Disease Screening'}</DialogTitle>
           <DialogDescription>
@@ -156,11 +156,11 @@ export function CommunicableDiseaseModal({ open, onOpenChange, entry, record }: 
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 pt-1">
-                <Button type="button" variant="outline" className="rounded-xl" onClick={() => onOpenChange(false)}>
+              <div className="grid grid-cols-1 gap-2 pt-1 sm:flex sm:justify-end">
+                <Button type="button" variant="outline" className="h-11 w-full rounded-xl sm:w-auto" onClick={() => onOpenChange(false)}>
                   Cancel
                 </Button>
-                <Button type="submit" className="rounded-xl" disabled={isSubmitting}>
+                <Button type="submit" className="h-11 w-full rounded-xl sm:w-auto" disabled={isSubmitting}>
                   {isSubmitting ? 'Saving…' : isEditing ? 'Update Screening' : 'Save Screening'}
                 </Button>
               </div>

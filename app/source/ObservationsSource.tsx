@@ -3,6 +3,14 @@ import { processRequest } from './processor';
 export const fetchObservationsRequest = (params?: Record<string, unknown>) =>
   processRequest({ method: 'GET', url: 'observations', params });
 
+export const searchDiagnosesRequest = (query: string, limit = 30) =>
+  processRequest({
+    method: 'GET',
+    url: 'observations/diagnoses/search',
+    params: { query, limit },
+    showErrorToaster: false,
+  });
+
 export const createObservationRequest = (data: unknown) =>
   processRequest({ method: 'POST', url: 'observations', data });
 

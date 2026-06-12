@@ -13,7 +13,7 @@ export default function TeamsPage() {
           Teams
         </h2>
         <p className="text-muted-foreground mt-1">
-          View and manage outreach team structure.
+          View your team leaders, members, and assigned service stations.
         </p>
       </div>
 

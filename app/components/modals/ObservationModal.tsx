@@ -12,10 +12,12 @@ import { useAppDispatch } from '@/app/hooks/redux';
 import { createObservation, updateObservation } from '@/app/store/observations';
 import { ObservationRecord, QueueEntry } from '@/app/store/queue-entries/queue-entries.types';
 import { toast } from 'sonner';
+import { DiagnosisCombobox } from '@/app/components/observations/DiagnosisCombobox';
 
 const schema = Yup.object({
   chiefComplaint: Yup.string().required('Chief complaint is required'),
   diagnosis: Yup.string().required('Diagnosis is required'),
+  diagnosisCode: Yup.string().nullable(),
   treatmentGiven: Yup.string().optional(),
   followUpRequired: Yup.boolean(),
   followUpNotes: Yup.string().optional(),
@@ -36,7 +38,7 @@ export function ObservationModal({ open, onOpenChange, entry, record }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[540px] rounded-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100vw-1rem)] max-w-none sm:max-w-[540px] rounded-2xl max-h-[calc(100dvh-1rem)] sm:max-h-[90vh] overflow-y-auto overscroll-contain p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Edit Observation' : 'Add Observation'}</DialogTitle>
           <DialogDescription>
@@ -48,6 +50,9 @@ export function ObservationModal({ open, onOpenChange, entry, record }: Props) {
           initialValues={{
             chiefComplaint: record?.chiefComplaint ?? (entry.chiefComplaint || ''),
             diagnosis: record?.diagnosis ?? '',
+            diagnosisCode: record
+              ? (record.diagnosisCode ?? null)
+              : ('' as string | null),
             treatmentGiven: record?.treatmentGiven ?? '',
             followUpRequired: record?.followUpRequired ?? false,
             followUpNotes: record?.followUpNotes ?? '',
@@ -70,8 +75,12 @@ export function ObservationModal({ open, onOpenChange, entry, record }: Props) {
               }
               resetForm();
               onOpenChange(false);
-            } catch (err: any) {
-              toast.error(err || `Failed to ${isEditing ? 'update' : 'save'} observation`);
+            } catch (error: unknown) {
+              toast.error(
+                typeof error === 'string'
+                  ? error
+                  : `Failed to ${isEditing ? 'update' : 'save'} observation`,
+              );
             } finally {
               setSubmitting(false);
             }
@@ -79,24 +88,61 @@ export function ObservationModal({ open, onOpenChange, entry, record }: Props) {
         >
           {({ isSubmitting, values, setFieldValue, errors, touched }) => (
             <Form className="space-y-4 pt-2">
-              {[
-                { name: 'chiefComplaint', label: 'Chief Complaint *', placeholder: 'Main reason for visit…' },
-                { name: 'diagnosis', label: 'Diagnosis *', placeholder: 'Clinical diagnosis…' },
-                { name: 'treatmentGiven', label: 'Treatment Given', placeholder: 'Treatment provided (optional)…' },
-              ].map(({ name, label, placeholder }) => (
-                <div key={name} className="space-y-1.5">
-                  <Label>{label}</Label>
+              <div className="space-y-1.5">
+                <Label>Chief Complaint *</Label>
+                <Field
+                  as="textarea"
+                  name="chiefComplaint"
+                  placeholder="Main reason for visit…"
+                  className="w-full rounded-xl border border-border bg-white/50 dark:bg-black/50 px-3 py-2 text-sm resize-none h-20 outline-none focus:ring-2 focus:ring-primary/40"
+                />
+                {errors.chiefComplaint && touched.chiefComplaint && (
+                  <p className="text-xs text-destructive">
+                    {errors.chiefComplaint}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Diagnosis *</Label>
+                <DiagnosisCombobox
+                  code={values.diagnosisCode}
+                  title={values.diagnosis}
+                  hasError={!!(errors.diagnosis && touched.diagnosis)}
+                  onChange={(diagnosis) => {
+                    if (diagnosis) {
+                      setFieldValue('diagnosisCode', diagnosis.code);
+                      setFieldValue('diagnosis', diagnosis.title);
+                    } else {
+                      setFieldValue('diagnosisCode', null);
+                      setFieldValue('diagnosis', '');
+                    }
+                  }}
+                />
+                {values.diagnosisCode === null && (
                   <Field
                     as="textarea"
-                    name={name}
-                    placeholder={placeholder}
+                    name="diagnosis"
+                    placeholder="Enter clinical diagnosis…"
                     className="w-full rounded-xl border border-border bg-white/50 dark:bg-black/50 px-3 py-2 text-sm resize-none h-20 outline-none focus:ring-2 focus:ring-primary/40"
                   />
-                  {(errors as any)[name] && (touched as any)[name] && (
-                    <p className="text-xs text-destructive">{(errors as any)[name]}</p>
-                  )}
-                </div>
-              ))}
+                )}
+                {errors.diagnosis && touched.diagnosis && (
+                  <p className="text-xs text-destructive">
+                    {errors.diagnosis}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Treatment Given</Label>
+                <Field
+                  as="textarea"
+                  name="treatmentGiven"
+                  placeholder="Treatment provided (optional)…"
+                  className="w-full rounded-xl border border-border bg-white/50 dark:bg-black/50 px-3 py-2 text-sm resize-none h-20 outline-none focus:ring-2 focus:ring-primary/40"
+                />
+              </div>
               <div className="flex items-center gap-3">
                 <Switch
                   checked={values.followUpRequired}
@@ -116,9 +162,9 @@ export function ObservationModal({ open, onOpenChange, entry, record }: Props) {
                   />
                 </div>
               )}
-              <div className="flex justify-end gap-2 pt-2">
-                <Button type="button" variant="outline" className="rounded-xl" onClick={() => onOpenChange(false)}>Cancel</Button>
-                <Button type="submit" className="rounded-xl" disabled={isSubmitting}>
+              <div className="grid grid-cols-1 gap-2 pt-2 sm:flex sm:justify-end">
+                <Button type="button" variant="outline" className="h-11 w-full rounded-xl sm:w-auto" onClick={() => onOpenChange(false)}>Cancel</Button>
+                <Button type="submit" className="h-11 w-full rounded-xl sm:w-auto" disabled={isSubmitting}>
                   {isSubmitting ? 'Saving…' : isEditing ? 'Update Observation' : 'Save Observation'}
                 </Button>
               </div>

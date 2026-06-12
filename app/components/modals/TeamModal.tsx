@@ -19,15 +19,22 @@ import {
 import { useAppDispatch, useAppSelector } from '@/app/hooks/redux';
 import { fetchUsers } from '@/app/store/users';
 import { fetchTeams } from '@/app/store/teams';
+import { fetchStations } from '@/app/store/stations';
 import { Team } from '@/app/store/teams/teams.types';
 import { User } from '@/app/store/users/users.types';
 import {
   Search, Check, ChevronsUpDown, UsersRound, FileText,
-  UserRound, ShieldCheck,
+  UserRound, ShieldCheck, Building2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const TEAM_TYPES = ['CLINICAL', 'ALLIED_HEALTH', 'SUPPORTING_STAFF', 'STUDENTS'] as const;
+const TEAM_TYPES = [
+  'CLINICAL',
+  'ALLIED_HEALTH',
+  'SUPPORTING_STAFF',
+  'STUDENTS',
+  'EVANGELISM',
+] as const;
 
 const AVATAR_COLORS = [
   'bg-blue-500', 'bg-purple-500', 'bg-emerald-500',
@@ -58,6 +65,7 @@ const schema = Yup.object({
   parentId: Yup.string().nullable(),
   leaderId: Yup.string().nullable(),
   memberIds: Yup.array().of(Yup.string()),
+  stationId: Yup.string().nullable(),
   isActive: Yup.boolean(),
   description: Yup.string().nullable().max(200),
 });
@@ -187,19 +195,21 @@ export function TeamModal({ open, onOpenChange, mode, initialData, outreachId, o
   const dispatch = useAppDispatch();
   const { list: users } = useAppSelector((s) => s.users);
   const { list: teams } = useAppSelector((s) => s.teams);
+  const { list: stations } = useAppSelector((s) => s.stations);
 
   const [memberSearch, setMemberSearch] = useState('');
   const [memberTab, setMemberTab] = useState<'all' | 'selected'>('all');
 
   useEffect(() => {
     if (open) {
-      dispatch(fetchUsers({ limit: 200 }));
+      dispatch(fetchUsers({ limit: 100 }));
       dispatch(fetchTeams({ outreachId, limit: 100 }));
+      dispatch(fetchStations({ outreachId, limit: 100 }));
     } else {
       setMemberSearch('');
-      setMemberTab('all');
+      setMemberTab(mode === 'view' ? 'selected' : 'all');
     }
-  }, [open, dispatch, outreachId]);
+  }, [open, dispatch, outreachId, mode]);
 
   const isViewOnly = mode === 'view';
   const topLevelTeams = teams.filter((t) => t.parent === null && t.id !== initialData?.id);
@@ -212,6 +222,7 @@ export function TeamModal({ open, onOpenChange, mode, initialData, outreachId, o
     parentId: initialData?.parent?.id || '',
     leaderId: initialData?.leader?.id || '',
     memberIds: initialData?.members?.map((m) => m.id) || [],
+    stationId: initialData?.station?.id || '',
     isActive: initialData?.isActive ?? true,
   };
 
@@ -253,6 +264,7 @@ export function TeamModal({ open, onOpenChange, mode, initialData, outreachId, o
                 type: values.type || undefined,
                 parentId: values.parentId || undefined,
                 leaderId: values.leaderId || undefined,
+                stationId: values.stationId || null,
                 description: values.description || undefined,
               });
               onOpenChange(false);
@@ -262,9 +274,35 @@ export function TeamModal({ open, onOpenChange, mode, initialData, outreachId, o
           }}
         >
           {({ values, setFieldValue, isSubmitting }) => {
-            const selectedLeader = users.find((u) => u.id === values.leaderId);
+            const initialPeople: User[] = [
+              ...(initialData?.members ?? []).map((member) => ({
+                ...member,
+                phone: null,
+                isActive: true,
+                roles: [],
+                station: null,
+              })),
+              ...(initialData?.leader
+                ? [
+                    {
+                      ...initialData.leader,
+                      isActive: true,
+                      roles: [],
+                      station: null,
+                    },
+                  ]
+                : []),
+            ];
+            const availableUsers = [
+              ...new Map(
+                [...users, ...initialPeople].map((user) => [user.id, user]),
+              ).values(),
+            ];
+            const selectedLeader = availableUsers.find(
+              (u) => u.id === values.leaderId,
+            );
 
-            const filteredBySearch = users.filter((u) => {
+            const filteredBySearch = availableUsers.filter((u) => {
               const q = memberSearch.toLowerCase();
               return (
                 u.firstName.toLowerCase().includes(q) ||
@@ -273,11 +311,13 @@ export function TeamModal({ open, onOpenChange, mode, initialData, outreachId, o
               );
             });
 
-            const visibleMembers = memberTab === 'selected'
+            const visibleMembers = isViewOnly || memberTab === 'selected'
               ? filteredBySearch.filter((u) => values.memberIds.includes(u.id))
               : filteredBySearch;
 
-            const selectedUsers = users.filter((u) => values.memberIds.includes(u.id));
+            const selectedUsers = availableUsers.filter((u) =>
+              values.memberIds.includes(u.id),
+            );
 
             const toggleMember = (userId: string) => {
               const next = values.memberIds.includes(userId)
@@ -376,6 +416,44 @@ export function TeamModal({ open, onOpenChange, mode, initialData, outreachId, o
                         </Select>
                       </div>
 
+                      {/* Team Station */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2">
+                          <Building2 className="w-4 h-4 text-muted-foreground" />
+                          <Label className="text-sm font-semibold text-foreground/80">
+                            Team Station
+                          </Label>
+                        </div>
+                        <Select
+                          value={values.stationId}
+                          onValueChange={(value) =>
+                            setFieldValue(
+                              'stationId',
+                              value === 'none' ? '' : value,
+                            )
+                          }
+                          disabled={isViewOnly}
+                        >
+                          <SelectTrigger className="h-11 rounded-xl bg-white/50 dark:bg-black/50 border-border">
+                            <SelectValue placeholder="No team station assigned" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">
+                              No team station
+                            </SelectItem>
+                            {stations.map((station) => (
+                              <SelectItem key={station.id} value={station.id}>
+                                {station.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">
+                          Members without an individual station will see this
+                          station&apos;s queue.
+                        </p>
+                      </div>
+
                       {/* Team Leader */}
                       <div className="space-y-3 pt-1">
                         <div className="flex items-center gap-2">
@@ -386,7 +464,7 @@ export function TeamModal({ open, onOpenChange, mode, initialData, outreachId, o
                           Select a team leader who will oversee this team.
                         </p>
                         <LeaderCombobox
-                          users={users}
+                          users={availableUsers}
                           value={values.leaderId}
                           onChange={(id) => setFieldValue('leaderId', id)}
                           disabled={isViewOnly}
@@ -395,9 +473,12 @@ export function TeamModal({ open, onOpenChange, mode, initialData, outreachId, o
                           <div className="flex items-start gap-2.5 p-3 rounded-xl bg-primary/5 border border-primary/15">
                             <ShieldCheck className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                             <div>
-                              <p className="text-xs font-semibold text-primary">Leaders can:</p>
+                              <p className="text-xs font-semibold text-primary">
+                                Team leader
+                              </p>
                               <p className="text-xs text-muted-foreground mt-0.5">
-                                Manage team settings, invite members, and view team reports.
+                                This person is shown as the team&apos;s point of
+                                contact.
                               </p>
                             </div>
                           </div>
@@ -444,7 +525,10 @@ export function TeamModal({ open, onOpenChange, mode, initialData, outreachId, o
                       {/* Tabs */}
                       <div className="flex items-center gap-1 border-b border-border/40">
                         {(['all', 'selected'] as const).map((tab) => {
-                          const count = tab === 'all' ? users.length : values.memberIds.length;
+                          const count =
+                            tab === 'all'
+                              ? availableUsers.length
+                              : values.memberIds.length;
                           const label = tab === 'all' ? 'All Members' : 'Selected';
                           return (
                             <button
@@ -472,7 +556,7 @@ export function TeamModal({ open, onOpenChange, mode, initialData, outreachId, o
 
                       {/* User list */}
                       <div className="flex-1 overflow-y-auto max-h-64 space-y-0.5 -mx-1 px-1">
-                        {users.length === 0 ? (
+                        {availableUsers.length === 0 ? (
                           <p className="text-sm text-muted-foreground text-center py-8">Loading users…</p>
                         ) : visibleMembers.length === 0 ? (
                           <p className="text-sm text-muted-foreground text-center py-8">

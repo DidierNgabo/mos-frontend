@@ -6,6 +6,7 @@ export const ROLES = {
   DATA_CLERK: 'DATA_CLERK',
   PHARMACIST: 'PHARMACIST',
   EVANGELIST: 'EVANGELIST',
+  PSYCHOLOGIST: 'PSYCHOLOGIST',
 } as const;
 
 export type RoleType = keyof typeof ROLES;

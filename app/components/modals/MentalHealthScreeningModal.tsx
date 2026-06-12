@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Formik, Form, useFormikContext } from 'formik';
+import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
 import {
   Dialog,
@@ -141,14 +141,12 @@ const PCL5_OPTIONS = [
 ];
 
 function RadioGroup({
-  name,
   question,
   index,
   options,
   value,
   onChange,
 }: {
-  name: string;
   question: string;
   index: number;
   options: { value: number; label: string }[];
@@ -156,32 +154,45 @@ function RadioGroup({
   onChange: (val: number) => void;
 }) {
   return (
-    <div className="space-y-2.5 py-3 border-b border-border/40 last:border-0">
-      <p className="text-sm font-medium leading-relaxed text-foreground">
-        <span className="text-muted-foreground mr-2">{index}.</span>
+    <fieldset className="space-y-3 border-b border-border/50 py-5 last:border-0">
+      <legend className="w-full text-sm font-semibold leading-6 text-foreground sm:text-base">
+        <span className="mr-2 text-muted-foreground">{index}.</span>
         {question}
-      </p>
-      <div className="flex flex-wrap gap-2">
+      </legend>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {options.map((opt) => (
           <button
             key={opt.value}
             type="button"
+            role="radio"
+            aria-checked={value === opt.value}
+            aria-label={`${question}: ${opt.label}`}
             onClick={() => onChange(opt.value)}
             className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium transition-all',
+              'flex min-h-12 w-full items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm font-medium transition-colors touch-manipulation',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
               value === opt.value
                 ? 'bg-primary text-primary-foreground border-primary shadow-sm'
-                : 'bg-muted/40 border-border text-muted-foreground hover:bg-muted hover:text-foreground',
+                : 'bg-background border-border text-foreground hover:border-primary/50 hover:bg-primary/5',
             )}
           >
-            {value === opt.value && (
-              <span className="h-1.5 w-1.5 rounded-full bg-primary-foreground shrink-0" />
-            )}
-            {opt.label}
+            <span
+              className={cn(
+                'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2',
+                value === opt.value
+                  ? 'border-primary-foreground'
+                  : 'border-muted-foreground/50',
+              )}
+            >
+              {value === opt.value && (
+                <span className="h-2.5 w-2.5 rounded-full bg-primary-foreground" />
+              )}
+            </span>
+            <span className="leading-5">{opt.label}</span>
           </button>
         ))}
       </div>
-    </div>
+    </fieldset>
   );
 }
 
@@ -199,7 +210,7 @@ function ScoreBadge({
   severity: { label: string; color: string };
 }) {
   return (
-    <div className="flex items-center gap-2 text-xs">
+    <div className="flex flex-wrap items-center gap-2 text-xs">
       <span className="text-muted-foreground font-medium">{label}:</span>
       <span className="font-bold tabular-nums">
         {score}/{max}
@@ -293,8 +304,8 @@ function StepPHQ9({
   const sev = phq9Severity(total);
   return (
     <div className="space-y-1">
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-xs text-muted-foreground">
+      <div className="mb-2 flex flex-col gap-3 rounded-xl bg-muted/40 p-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm leading-5 text-muted-foreground">
           Mu byumweru bibiri bishize, ni inshuro zingahe wabujijwe amahoro na
           kimwe mu bibazo bikurikira?
         </p>
@@ -303,7 +314,6 @@ function StepPHQ9({
       {PHQ9_QUESTIONS.map((q, i) => (
         <RadioGroup
           key={i}
-          name={PHQ9_FIELDS[i]}
           question={q}
           index={i + 1}
           options={PHQ9_OPTIONS}
@@ -326,8 +336,8 @@ function StepGAD7({
   const sev = gad7Severity(total);
   return (
     <div className="space-y-1">
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-xs text-muted-foreground">
+      <div className="mb-2 flex flex-col gap-3 rounded-xl bg-muted/40 p-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm leading-5 text-muted-foreground">
           Over the last 2 weeks, how often have you been bothered by the
           following?
         </p>
@@ -336,7 +346,6 @@ function StepGAD7({
       {GAD7_QUESTIONS.map((q, i) => (
         <RadioGroup
           key={i}
-          name={GAD7_FIELDS[i]}
           question={q}
           index={i + 1}
           options={GAD7_OPTIONS}
@@ -349,10 +358,10 @@ function StepGAD7({
 }
 
 const MARITAL_OPTIONS = [
-  { value: 'SINGLE', label: 'Ingaragu' },
-  { value: 'MARRIED', label: 'Uburwanasoni' },
-  { value: 'DIVORCED', label: 'Waraguye' },
-  { value: 'WIDOWED', label: 'Umupfakazi' },
+  { value: 'SINGLE', label: 'Single' },
+  { value: 'MARRIED', label: 'Married' },
+  { value: 'DIVORCED', label: 'Divorced' },
+  { value: 'WIDOWED', label: 'Widowed' },
 ];
 const EDUCATION_OPTIONS = [
   { value: 'NONE', label: 'None' },
@@ -397,14 +406,14 @@ function SelectGroup({
       <Label className="text-xs font-semibold text-foreground/80">
         {label}
       </Label>
-      <div className="flex flex-wrap gap-2">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {options.map((opt) => (
           <button
             key={opt.value}
             type="button"
             onClick={() => onChange(opt.value)}
             className={cn(
-              'px-3 py-1.5 rounded-xl border text-xs font-medium transition-all',
+              'min-h-12 w-full rounded-xl border px-4 py-3 text-left text-sm font-medium transition-colors touch-manipulation',
               value === opt.value
                 ? 'bg-primary text-primary-foreground border-primary shadow-sm'
                 : 'bg-muted/40 border-border text-muted-foreground hover:bg-muted hover:text-foreground',
@@ -427,9 +436,15 @@ function StepPCL5Demographics({
 }) {
   return (
     <div className="space-y-5">
+      <div className="rounded-xl bg-muted/40 p-3">
+        <p className="text-sm font-semibold">Demographic information</p>
+        <p className="mt-1 text-xs leading-5 text-muted-foreground">
+          Complete all fields before continuing to the screening questions.
+        </p>
+      </div>
       <div className="space-y-1.5">
         <Label className="text-xs font-semibold text-foreground/80">
-          Intera z&apos;izina (Initial)
+          Intera z&apos;izina (Initial) *
         </Label>
         <input
           type="text"
@@ -439,41 +454,41 @@ function StepPCL5Demographics({
             setFieldValue('initialOfParticipant', e.target.value)
           }
           placeholder="Urugero: JD"
-          className="h-9 w-full rounded-xl border border-border bg-white/50 dark:bg-black/50 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+          className="h-12 w-full rounded-xl border border-border bg-white/50 dark:bg-black/50 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
         />
       </div>
       <SelectGroup
-        label="Marital Status"
+        label="Marital Status *"
         options={MARITAL_OPTIONS}
         value={values.maritalStatus ?? ''}
         onChange={(v) => setFieldValue('maritalStatus', v)}
       />
       <SelectGroup
-        label="Education"
+        label="Education *"
         options={EDUCATION_OPTIONS}
         value={values.educationLevel ?? ''}
         onChange={(v) => setFieldValue('educationLevel', v)}
       />
       <SelectGroup
-        label="Occupation"
+        label="Occupation *"
         options={OCCUPATION_OPTIONS}
         value={values.occupation ?? ''}
         onChange={(v) => setFieldValue('occupation', v)}
       />
       <SelectGroup
-        label="Division"
+        label="Division *"
         options={DIVISION_OPTIONS}
         value={values.division ?? ''}
         onChange={(v) => setFieldValue('division', v)}
       />
       <SelectGroup
-        label="Location"
+        label="Location *"
         options={LOCATION_OPTIONS}
         value={values.locationType ?? ''}
         onChange={(v) => setFieldValue('locationType', v)}
       />
       <SelectGroup
-        label="Idini"
+        label="Religion *"
         options={RELIGION_OPTIONS}
         value={values.religion ?? ''}
         onChange={(v) => setFieldValue('religion', v)}
@@ -496,8 +511,8 @@ function StepPCL5Questions({
   const sev = pcl5Severity(total);
   return (
     <div className="space-y-1">
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-xs text-muted-foreground">
+      <div className="mb-2 flex flex-col gap-3 rounded-xl bg-muted/40 p-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm leading-5 text-muted-foreground">
           Mu kwezi gushize, ibi bikurikira byakubayeho ku ruhe rugero?
         </p>
         <ScoreBadge label="PCL-5" score={total} max={80} severity={sev} />
@@ -505,7 +520,6 @@ function StepPCL5Questions({
       {PCL5_QUESTIONS.map((q, i) => (
         <RadioGroup
           key={i}
-          name={`pcl5_q${i + 1}`}
           question={q}
           index={i + 1}
           options={PCL5_OPTIONS}
@@ -553,14 +567,20 @@ function buildInitialValues(record?: EditRecord | null) {
     q5Restless: record?.gad7.q5Restless ?? 0,
     q6Irritable: record?.gad7.q6Irritable ?? 0,
     q7Afraid: record?.gad7.q7Afraid ?? 0,
-    // PCL-5 demographics
-    initialOfParticipant: record?.pcl5?.initialOfParticipant ?? '',
-    maritalStatus: record?.pcl5?.maritalStatus ?? '',
-    educationLevel: record?.pcl5?.educationLevel ?? '',
-    occupation: record?.pcl5?.occupation ?? '',
-    division: record?.pcl5?.division ?? '',
-    locationType: record?.pcl5?.locationType ?? '',
-    religion: record?.pcl5?.religion ?? '',
+    // PHQ-9 is the common record for every mental-health screening.
+    // PCL-5 remains a fallback for records created before this change.
+    initialOfParticipant:
+      record?.phq9.initialOfParticipant ??
+      record?.pcl5?.initialOfParticipant ??
+      '',
+    maritalStatus:
+      record?.phq9.maritalStatus ?? record?.pcl5?.maritalStatus ?? '',
+    educationLevel:
+      record?.phq9.educationLevel ?? record?.pcl5?.educationLevel ?? '',
+    occupation: record?.phq9.occupation ?? record?.pcl5?.occupation ?? '',
+    division: record?.phq9.division ?? record?.pcl5?.division ?? '',
+    locationType: record?.phq9.locationType ?? record?.pcl5?.locationType ?? '',
+    religion: record?.phq9.religion ?? record?.pcl5?.religion ?? '',
     // PCL-5 questions (q1–q20 stored as pcl5_q1..pcl5_q20)
     ...Object.fromEntries(
       Array.from({ length: 20 }, (_, i) => [
@@ -569,6 +589,18 @@ function buildInitialValues(record?: EditRecord | null) {
       ]),
     ),
   };
+}
+
+function hasCompleteDemographics(values: Record<string, unknown>) {
+  return [
+    values.initialOfParticipant,
+    values.maritalStatus,
+    values.educationLevel,
+    values.occupation,
+    values.division,
+    values.locationType,
+    values.religion,
+  ].every((value) => String(value ?? '').trim().length > 0);
 }
 
 export function MentalHealthScreeningModal({
@@ -583,14 +615,14 @@ export function MentalHealthScreeningModal({
 
   const age = patientAge(entry?.patient.dateOfBirth);
   const isAdult = age >= 18;
-  const totalSteps = isAdult ? 4 : 2;
+  const totalSteps = isAdult ? 4 : 3;
   const isEditing = !!record;
 
   const STEP_LABELS = useMemo(
     () =>
       isAdult
-        ? ['PHQ-9', 'GAD-7', 'PCL-5: Imiterere', 'PCL-5: Ibibazo']
-        : ['PHQ-9', 'GAD-7'],
+        ? ['Demographic', 'PHQ-9', 'GAD-7', 'PCL-5: Ibibazo']
+        : ['Demographic', 'PHQ-9', 'GAD-7'],
     [isAdult],
   );
 
@@ -610,25 +642,25 @@ export function MentalHealthScreeningModal({
         if (!o) handleClose();
       }}
     >
-      <DialogContent className="w-[90vw] sm:max-w-4xl rounded-2xl max-h-[92vh] flex flex-col p-0 overflow-hidden">
+      <DialogContent className="h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-none rounded-2xl p-0 overflow-hidden flex flex-col sm:h-auto sm:max-h-[92vh] sm:max-w-4xl">
         {/* Header */}
-        <div className="px-6 pt-6 pb-4 border-b border-border/50 shrink-0">
+        <div className="shrink-0 border-b border-border/50 px-4 pb-3 pt-4 sm:px-6 sm:pb-4 sm:pt-6">
           <DialogHeader>
-            <div className="flex items-center gap-2.5">
-              <div className="h-8 w-8 rounded-xl bg-primary/10 flex items-center justify-center">
+            <div className="flex items-start gap-2.5 pr-8">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10">
                 <Brain className="h-4 w-4 text-primary" />
               </div>
-              <div>
-                <DialogTitle className="text-base">
+              <div className="min-w-0">
+                <DialogTitle className="text-base leading-6 sm:text-lg">
                   {isEditing
                     ? "Hindura isuzuma ry'ubuzima bwo mu mutwe"
                     : "Isuzuma ry'ubuzima bwo mu mutwe"}
                 </DialogTitle>
-                <DialogDescription className="text-xs">
+                <DialogDescription className="mt-0.5 text-xs leading-5 sm:text-sm">
                   {entry.patient.firstName} {entry.patient.lastName}
                   {!isAdult && (
                     <span className="ml-2 text-amber-600 font-medium">
-                      (Imyaka &lt;18 — PHQ-9 na GAD-7 gusa)
+                      (Imyaka &lt;18 — Demographic, PHQ-9 na GAD-7)
                     </span>
                   )}
                 </DialogDescription>
@@ -637,39 +669,49 @@ export function MentalHealthScreeningModal({
           </DialogHeader>
 
           {/* Step indicator */}
-          <div className="mt-4 flex items-center gap-1.5">
-            {STEP_LABELS.map((label, i) => (
-              <div key={i} className="flex items-center gap-1.5 flex-1">
-                <div
-                  className={cn(
-                    'flex items-center justify-center h-6 w-6 rounded-full text-xs font-bold shrink-0 transition-colors',
-                    i < step
-                      ? 'bg-primary text-primary-foreground'
-                      : i === step
-                        ? 'bg-primary/20 text-primary border-2 border-primary'
-                        : 'bg-muted text-muted-foreground',
-                  )}
-                >
-                  {i < step ? '✓' : i + 1}
-                </div>
-                <span
-                  className={cn(
-                    'text-xs font-medium hidden sm:block',
-                    i === step ? 'text-foreground' : 'text-muted-foreground',
-                  )}
-                >
-                  {label}
-                </span>
-                {i < totalSteps - 1 && (
+          <div className="mt-4">
+            <div className="mb-2 flex items-center justify-between sm:hidden">
+              <span className="text-xs font-semibold text-primary">
+                Step {step + 1} of {totalSteps}
+              </span>
+              <span className="max-w-[70%] truncate text-xs font-medium text-foreground">
+                {STEP_LABELS[step]}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              {STEP_LABELS.map((label, i) => (
+                <div key={i} className="flex items-center gap-1.5 flex-1">
                   <div
                     className={cn(
-                      'h-0.5 flex-1 rounded-full',
-                      i < step ? 'bg-primary' : 'bg-muted',
+                      'flex items-center justify-center h-6 w-6 rounded-full text-xs font-bold shrink-0 transition-colors',
+                      i < step
+                        ? 'bg-primary text-primary-foreground'
+                        : i === step
+                          ? 'bg-primary/20 text-primary border-2 border-primary'
+                          : 'bg-muted text-muted-foreground',
                     )}
-                  />
-                )}
-              </div>
-            ))}
+                  >
+                    {i < step ? '✓' : i + 1}
+                  </div>
+                  <span
+                    className={cn(
+                      'text-xs font-medium hidden sm:block',
+                      i === step ? 'text-foreground' : 'text-muted-foreground',
+                    )}
+                  >
+                    {label}
+                  </span>
+                  {i < totalSteps - 1 && (
+                    <div
+                      className={cn(
+                        'h-0.5 flex-1 rounded-full',
+                        i < step ? 'bg-primary' : 'bg-muted',
+                      )}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -679,6 +721,11 @@ export function MentalHealthScreeningModal({
           initialValues={initialValues}
           validationSchema={Yup.object({})}
           onSubmit={async (values, { setSubmitting }) => {
+            if (step === 0 && !hasCompleteDemographics(values)) {
+              toast.error('Complete all demographic fields before continuing.');
+              setSubmitting(false);
+              return;
+            }
             // Guard: never save from a non-final step (handles any accidental submission)
             if (step < totalSteps - 1) {
               setStep((s) => s + 1);
@@ -695,6 +742,13 @@ export function MentalHealthScreeningModal({
 
             const phq9Payload = {
               ...commonIds,
+              initialOfParticipant: values.initialOfParticipant,
+              maritalStatus: values.maritalStatus,
+              educationLevel: values.educationLevel,
+              occupation: values.occupation,
+              division: values.division,
+              locationType: values.locationType,
+              religion: values.religion,
               q1LittleInterest: values.q1LittleInterest,
               q2Depressed: values.q2Depressed,
               q3SleepProblems: values.q3SleepProblems,
@@ -780,73 +834,84 @@ export function MentalHealthScreeningModal({
             }
           }}
         >
-          {({ values, setFieldValue, isSubmitting }) => (
-            <Form className="flex flex-col flex-1 min-h-0">
-              {/* Scrollable content */}
-              <div className="flex-1 overflow-y-auto px-6 py-4">
-                {step === 0 && (
-                  <StepPHQ9 values={values} setFieldValue={setFieldValue} />
-                )}
-                {step === 1 && (
-                  <StepGAD7 values={values} setFieldValue={setFieldValue} />
-                )}
-                {step === 2 && isAdult && (
-                  <StepPCL5Demographics
-                    values={values}
-                    setFieldValue={setFieldValue}
-                  />
-                )}
-                {step === 3 && isAdult && (
-                  <StepPCL5Questions
-                    values={values}
-                    setFieldValue={setFieldValue}
-                  />
-                )}
-              </div>
+          {({ values, setFieldValue, isSubmitting }) => {
+            const demographicsComplete = hasCompleteDemographics(values);
 
-              {/* Footer buttons */}
-              <div className="px-6 py-4 border-t border-border/50 flex items-center justify-between gap-3 shrink-0 bg-white/60 dark:bg-black/40">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="rounded-xl"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    if (step === 0) {
-                      handleClose();
-                    } else {
-                      setStep((s) => s - 1);
-                    }
-                  }}
-                >
-                  <ChevronLeft className="h-4 w-4 mr-1" />
-                  {step === 0 ? 'Cancel' : 'Back'}
-                </Button>
+            return (
+              <Form className="flex flex-col flex-1 min-h-0">
+                {/* Scrollable content */}
+                <div className="flex-1 overscroll-contain overflow-y-auto px-4 py-2 sm:px-6 sm:py-4">
+                  {step === 0 && (
+                    <StepPCL5Demographics
+                      values={values}
+                      setFieldValue={setFieldValue}
+                    />
+                  )}
+                  {step === 1 && (
+                    <StepPHQ9 values={values} setFieldValue={setFieldValue} />
+                  )}
+                  {step === 2 && (
+                    <StepGAD7 values={values} setFieldValue={setFieldValue} />
+                  )}
+                  {step === 3 && isAdult && (
+                    <StepPCL5Questions
+                      values={values}
+                      setFieldValue={setFieldValue}
+                    />
+                  )}
+                </div>
 
-                {step < totalSteps - 1 ? (
-                  <Button
-                    type="button"
-                    className="rounded-xl"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setStep((s) => s + 1);
-                    }}
-                  >
-                    Next
-                    <ChevronRight className="h-4 w-4 ml-1" />
-                  </Button>
-                ) : (
-                  <Button
-                    type="submit"
-                    className="rounded-xl"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? 'Saving...' : isEditing ? 'Update' : 'Save'}
-                  </Button>
-                )}
-              </div>
-            </Form>
-          )}
+                {/* Footer buttons */}
+                <div className="shrink-0 border-t border-border/50 bg-background/95 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur sm:px-6 sm:py-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-12 rounded-xl text-sm"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (step === 0) {
+                          handleClose();
+                        } else {
+                          setStep((s) => s - 1);
+                        }
+                      }}
+                    >
+                      <ChevronLeft className="h-4 w-4 mr-1" />
+                      {step === 0 ? 'Cancel' : 'Back'}
+                    </Button>
+
+                    {step < totalSteps - 1 ? (
+                      <Button
+                        type="button"
+                        className="h-12 rounded-xl text-sm"
+                        disabled={step === 0 && !demographicsComplete}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setStep((s) => s + 1);
+                        }}
+                      >
+                        Next
+                        <ChevronRight className="h-4 w-4 ml-1" />
+                      </Button>
+                    ) : (
+                      <Button
+                        type="submit"
+                        className="h-12 rounded-xl text-sm"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting
+                          ? 'Saving...'
+                          : isEditing
+                            ? 'Update'
+                            : 'Save'}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </Form>
+            );
+          }}
         </Formik>
       </DialogContent>
     </Dialog>

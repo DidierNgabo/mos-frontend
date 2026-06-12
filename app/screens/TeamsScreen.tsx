@@ -19,6 +19,8 @@ import {
   Phone,
   Mail,
   ChevronDown,
+  Building2,
+  HeartHandshake,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAppDispatch, useAppSelector } from '@/app/hooks/redux';
@@ -80,6 +82,13 @@ const TYPE_CONFIG: Record<
     iconBg: 'bg-emerald-500/10',
     dot: 'bg-emerald-500',
   },
+  EVANGELISM: {
+    label: 'Evangelism Team',
+    icon: HeartHandshake,
+    color: 'text-rose-600',
+    iconBg: 'bg-rose-500/10',
+    dot: 'bg-rose-500',
+  },
 };
 
 interface TeamsScreenProps {
@@ -89,6 +98,11 @@ interface TeamsScreenProps {
 export default function TeamsScreen({ outreachId }: TeamsScreenProps) {
   const dispatch = useAppDispatch();
   const { list: teams, isLoading } = useAppSelector((s) => s.teams);
+  const { user } = useAppSelector((s) => s.auth);
+  const isAdmin =
+    user?.roles?.some((role) =>
+      ['SUPER_ADMIN', 'OUTREACH_ADMIN'].includes(role),
+    ) ?? false;
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>(
@@ -110,7 +124,15 @@ export default function TeamsScreen({ outreachId }: TeamsScreenProps) {
   // Auto-expand categories that have matching sub-teams when searching
   useEffect(() => {
     if (!searchQuery) {
-      setExpanded({});
+      setExpanded(
+        isAdmin
+          ? {}
+          : Object.fromEntries(
+              teams
+                .filter((team) => team.parent === null)
+                .map((team) => [team.id, true]),
+            ),
+      );
       return;
     }
     const autoExpand: Record<string, boolean> = {};
@@ -119,7 +141,7 @@ export default function TeamsScreen({ outreachId }: TeamsScreenProps) {
     });
     setExpanded(autoExpand);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery]);
+  }, [searchQuery, isAdmin, teams]);
 
   const topLevelTeams = teams.filter(
     (t) => t.parent === null && t.type !== null,
@@ -341,6 +363,18 @@ export default function TeamsScreen({ outreachId }: TeamsScreenProps) {
                     </Badge>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 rounded-lg"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleOpenModal('view', parent);
+                      }}
+                    >
+                      <Eye className="mr-1 h-3.5 w-3.5" />
+                      View
+                    </Button>
                     <Can do="update" on="Team">
                       <span
                         role="button"
@@ -460,6 +494,10 @@ function SubTeamRow({
         <div className="min-w-0">
           <span className="font-medium text-sm truncate block">
             {team.name}
+          </span>
+          <span className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+            <Building2 className="h-3 w-3" />
+            {team.station?.name ?? 'No station assigned'}
           </span>
           {!team.isActive && (
             <Badge

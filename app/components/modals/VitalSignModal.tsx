@@ -154,7 +154,7 @@ export function VitalSignModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[680px] rounded-3xl p-6 bg-white/95 dark:bg-black/95 backdrop-blur-xl border-border/50 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100vw-1rem)] max-w-none sm:max-w-[680px] rounded-2xl sm:rounded-3xl p-4 sm:p-6 bg-white/95 dark:bg-black/95 backdrop-blur-xl border-border/50 shadow-2xl max-h-[calc(100dvh-1rem)] sm:max-h-[90vh] overflow-y-auto overscroll-contain">
         <DialogHeader className="mb-4">
           <DialogTitle className="text-2xl font-bold tracking-tight">
             {mode === 'create' && 'Record Vital Signs'}
@@ -206,7 +206,7 @@ export function VitalSignModal({
 
               {/* ── Patient & Station ───────────────────── */}
               {sectionLabel('Patient & Station')}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label className="text-sm font-semibold text-foreground/80">Patient</Label>
                   {isPatientLocked ? (
@@ -265,7 +265,7 @@ export function VitalSignModal({
 
               {/* ── Blood Pressure & Pulse ──────────────── */}
               {sectionLabel('Cardiovascular')}
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="bloodPressureSystolic" className="text-sm font-semibold text-foreground/80">
                     Systolic <span className="font-normal text-muted-foreground">(mmHg)</span>
@@ -294,7 +294,7 @@ export function VitalSignModal({
 
               {/* ── Body Measurements ──────────────────── */}
               {sectionLabel('Body Measurements')}
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="weight" className="text-sm font-semibold text-foreground/80">
                     Weight <span className="font-normal text-muted-foreground">(kg)</span>
@@ -321,7 +321,7 @@ export function VitalSignModal({
 
               {/* ── Additional Vitals ──────────────────── */}
               {sectionLabel('Additional Vitals (Optional)')}
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="temperature" className="text-sm font-semibold text-foreground/80">
                     Temperature <span className="font-normal text-muted-foreground">(°C)</span>
@@ -364,12 +364,12 @@ export function VitalSignModal({
               </div>
 
               {/* ── Actions ───────────────────────────── */}
-              <div className="pt-4 flex gap-3 justify-end border-t border-border/50 mt-4">
+              <div className="pt-4 grid grid-cols-1 sm:flex gap-3 sm:justify-end border-t border-border/50 mt-4">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => onOpenChange(false)}
-                  className="h-12 px-6 rounded-xl"
+                  className="h-12 w-full sm:w-auto px-6 rounded-xl"
                 >
                   {isViewOnly ? 'Close' : 'Cancel'}
                 </Button>
@@ -377,7 +377,7 @@ export function VitalSignModal({
                   <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="h-12 px-8 rounded-xl shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all"
+                    className="h-12 w-full sm:w-auto px-8 rounded-xl shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all"
                   >
                     {isSubmitting ? 'Saving...' : 'Save Vital Signs'}
                   </Button>

@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, type ElementType } from 'react';
 import { useRouter } from 'next/navigation';
-import { Clock, RefreshCw, User, AlertTriangle, Zap, CheckCircle2, XCircle, ArrowRight, MoreHorizontal, Stethoscope, FlaskConical, Ambulance, Play } from 'lucide-react';
+import { Clock, RefreshCw, AlertTriangle, CheckCircle2, XCircle, ArrowRight, MoreHorizontal, Stethoscope, FlaskConical, Ambulance, Play } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/app/hooks/redux';
-import { fetchMyQueue, moveQueueEntry, updateQueueStatus } from '@/app/store/queue-entries';
+import { fetchMyQueue, updateQueueStatus } from '@/app/store/queue-entries';
 import { fetchStations } from '@/app/store/stations';
 import { QueueEntry, QueuePriority, QueueStatus } from '@/app/store/queue-entries/queue-entries.types';
 import { Button } from '@/app/components/ui/button';
@@ -31,7 +31,7 @@ const PRIORITY_CONFIG: Record<QueuePriority, { label: string; className: string 
   NORMAL:    { label: 'Normal',    className: 'bg-slate-100 text-slate-600 border-slate-300' },
 };
 
-const STATUS_CONFIG: Record<QueueStatus, { label: string; icon: any; className: string }> = {
+const STATUS_CONFIG: Record<QueueStatus, { label: string; icon: ElementType; className: string }> = {
   WAITING:    { label: 'Waiting',    icon: Clock,         className: 'text-amber-600' },
   IN_SERVICE: { label: 'In Service', icon: Play,          className: 'text-blue-600' },
   COMPLETED:  { label: 'Completed',  icon: CheckCircle2,  className: 'text-green-600' },
@@ -47,12 +47,16 @@ function waitTime(createdAt: string) {
 export default function ServiceQueueScreen() {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const { list: entries, isLoadingQueue, totalNumItems } = useAppSelector((s) => s.queueEntries);
+  const { list: entries, isLoadingQueue, totalNumItems, queueScope } =
+    useAppSelector((s) => s.queueEntries);
   const { list: stations } = useAppSelector((s) => s.stations);
   const { activeOutreachId } = useAppSelector((s) => s.outreachContext);
   const { user } = useAppSelector((s) => s.auth);
 
-  const isClinical = user?.roles?.some((r: string) => ['NURSE', 'DOCTOR'].includes(r)) ?? false;
+  const isClinical =
+    user?.roles?.some((r: string) =>
+      ['NURSE', 'DOCTOR', 'PSYCHOLOGIST'].includes(r),
+    ) ?? false;
 
   const [stationFilter, setStationFilter] = useState<string | undefined>(undefined);
   const [statusFilter, setStatusFilter] = useState<string>('active');
@@ -134,7 +138,14 @@ export default function ServiceQueueScreen() {
             Service Queue
           </h2>
           <p className="text-muted-foreground mt-1">
-            Patients waiting at your station — auto-refreshes every 30 seconds.
+            {queueScope?.source === 'TEAM'
+              ? `Patients waiting at your team station${queueScope.stations.length === 1 ? '' : 's'}: ${queueScope.stations.map((station) => station.name).join(', ')}.`
+              : queueScope?.source === 'INDIVIDUAL'
+                ? `Patients waiting at your assigned station: ${queueScope.stations[0]?.name}.`
+                : queueScope?.source === 'NONE'
+                  ? 'No individual or team station is assigned to you.'
+                  : 'Patients waiting across service stations.'}{' '}
+            Auto-refreshes every 30 seconds.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -214,8 +225,6 @@ export default function ServiceQueueScreen() {
           const prio = PRIORITY_CONFIG[entry.priority];
           const stat = STATUS_CONFIG[entry.status];
           const StatIcon = stat.icon;
-          const stationType = entry.currentStation?.type;
-
           return (
             <div
               key={entry.id}

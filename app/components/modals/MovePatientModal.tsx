@@ -45,7 +45,7 @@ export function MovePatientModal({ open, onOpenChange, entry, onSuccess }: Props
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[440px] rounded-2xl">
+      <DialogContent className="w-[calc(100vw-1rem)] max-w-none sm:max-w-[440px] rounded-2xl max-h-[calc(100dvh-1rem)] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>Move Patient</DialogTitle>
           <DialogDescription>
@@ -98,11 +98,11 @@ export function MovePatientModal({ open, onOpenChange, entry, onSuccess }: Props
                   className="w-full rounded-xl border border-border bg-white/50 dark:bg-black/50 px-3 py-2 text-sm resize-none h-20 outline-none focus:ring-2 focus:ring-primary/40"
                 />
               </div>
-              <div className="flex justify-end gap-2 pt-2">
-                <Button type="button" variant="outline" className="rounded-xl" onClick={() => onOpenChange(false)}>
+              <div className="grid grid-cols-1 gap-2 pt-2 sm:flex sm:justify-end">
+                <Button type="button" variant="outline" className="h-11 w-full rounded-xl sm:w-auto" onClick={() => onOpenChange(false)}>
                   Cancel
                 </Button>
-                <Button type="submit" className="rounded-xl" disabled={isSubmitting}>
+                <Button type="submit" className="h-11 w-full rounded-xl sm:w-auto" disabled={isSubmitting}>
                   {isSubmitting ? 'Moving…' : 'Move Patient'}
                 </Button>
               </div>

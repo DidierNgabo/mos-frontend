@@ -20,6 +20,7 @@ const initialState: QueueEntriesState = {
   queueError: null,
   chart: null,
   isLoadingChart: false,
+  queueScope: null,
 };
 
 const queueEntriesSlice = createSlice({
@@ -37,6 +38,7 @@ const queueEntriesSlice = createSlice({
         state.isLoadingQueue = false;
         state.list = payload?.items || [];
         state.totalNumItems = payload?.paginationInfo?.totalNumItems || 0;
+        state.queueScope = payload?.queueScope ?? null;
       })
       .addCase(fetchQueueEntries.rejected, (state, action) => {
         state.isLoadingQueue = false;
@@ -47,6 +49,7 @@ const queueEntriesSlice = createSlice({
         state.isLoadingQueue = false;
         state.list = payload?.items || [];
         state.totalNumItems = payload?.paginationInfo?.totalNumItems || 0;
+        state.queueScope = payload?.queueScope ?? null;
       })
       .addCase(fetchMyQueue.rejected, (state, action) => {
         state.isLoadingQueue = false;

@@ -23,6 +23,7 @@ export interface Team {
   children: Team[];
   leader: TeamLeader | null;
   members: TeamMember[];
+  station: { id: string; name: string; type: string } | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

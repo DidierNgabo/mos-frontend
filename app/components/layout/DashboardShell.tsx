@@ -33,6 +33,7 @@ import {
   UsersRound,
   FileText,
   HeartHandshake,
+  Brain,
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/app/components/ui/button';
@@ -59,6 +60,7 @@ const navItems: {
       'NURSE',
       'DOCTOR',
       'PHARMACIST',
+      'PSYCHOLOGIST',
     ],
   },
   {
@@ -83,7 +85,7 @@ const navItems: {
     href: '/teams',
     label: 'Teams',
     icon: UsersRound,
-    allowedRoles: ['SUPER_ADMIN', 'OUTREACH_ADMIN', 'NURSE', 'DOCTOR', 'DATA_CLERK', 'PHARMACIST'],
+    allowedRoles: ['SUPER_ADMIN', 'OUTREACH_ADMIN', 'NURSE', 'DOCTOR', 'DATA_CLERK', 'PHARMACIST', 'PSYCHOLOGIST'],
   },
   {
     href: '/vital-signs',
@@ -96,6 +98,12 @@ const navItems: {
       'OUTREACH_ADMIN',
       'SUPER_ADMIN',
     ],
+  },
+  {
+    href: '/mental-health',
+    label: 'Mental Health',
+    icon: Brain,
+    allowedRoles: ['SUPER_ADMIN', 'OUTREACH_ADMIN', 'PSYCHOLOGIST'],
   },
   {
     href: '/pharmacy',
@@ -414,7 +422,7 @@ export default function DashboardShell({
       {/* Main content */}
       <div className="flex flex-1 flex-col overflow-hidden relative z-10">
         {/* Topbar */}
-        <header className="flex h-20 items-center gap-4 border-b border-border/50 bg-white/40 dark:bg-black/20 backdrop-blur-md px-6 shrink-0 sticky top-0 z-20">
+        <header className="flex h-16 sm:h-20 items-center gap-4 border-b border-border/50 bg-white/40 dark:bg-black/20 backdrop-blur-md px-3 sm:px-6 shrink-0 sticky top-0 z-20">
           <button
             className="lg:hidden text-muted-foreground hover:text-foreground transition-colors p-2 rounded-md hover:bg-muted"
             onClick={() => setSidebarOpen(true)}
@@ -440,7 +448,7 @@ export default function DashboardShell({
         </header>
 
         {/* Page */}
-        <main className="flex-1 overflow-y-auto p-6 lg:p-8">
+        <main className="flex-1 overflow-y-auto px-3 py-4 sm:p-6 lg:p-8">
           <div className="mx-auto max-w-6xl">{children}</div>
         </main>
       </div>

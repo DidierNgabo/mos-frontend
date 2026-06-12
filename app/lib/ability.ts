@@ -42,7 +42,7 @@ export function buildAbilityFor(roles: string[]): Ability {
     grant('manage', 'all');
   } else {
     if (has('OUTREACH_ADMIN')) {
-      grant('manage', ['Outreach', 'Station', 'Team', 'Patient', 'PharmacyStock', 'VitalSign', 'QueueEntry', 'Observation', 'LabResult', 'CommunicableDisease', 'Transfer', 'Prescription', 'EvangelismRecord']);
+      grant('manage', ['Outreach', 'Station', 'Team', 'Patient', 'PharmacyStock', 'VitalSign', 'QueueEntry', 'Observation', 'LabResult', 'CommunicableDisease', 'Transfer', 'Prescription', 'PHQ9Screening', 'GAD7Screening', 'PCL5Screening', 'EvangelismRecord']);
       grant(['create', 'read', 'update'], 'User');
       grant('read', 'Role');
     }
@@ -50,6 +50,14 @@ export function buildAbilityFor(roles: string[]): Ability {
     if (has('EVANGELIST')) {
       grant(['create', 'read', 'update'], 'EvangelismRecord');
       grant('read', ['Outreach', 'Patient']);
+    }
+
+    if (has('PSYCHOLOGIST')) {
+      grant('read', ['Outreach', 'Station', 'Team', 'QueueEntry']);
+      grant(
+        ['create', 'read', 'update', 'delete'],
+        ['PHQ9Screening', 'GAD7Screening', 'PCL5Screening'],
+      );
     }
 
     if (has('PHARMACIST')) {
@@ -86,12 +94,6 @@ export function buildAbilityFor(roles: string[]): Ability {
 
     if (has('NURSE')) {
       grant('read', 'Prescription');
-    }
-
-    if (has('NURSE') || has('DOCTOR')) {
-      grant(['create', 'read', 'update'], 'PHQ9Screening');
-      grant(['create', 'read', 'update'], 'GAD7Screening');
-      grant(['create', 'read', 'update'], 'PCL5Screening');
     }
 
     // Every authenticated user can read/update their own profile

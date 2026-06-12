@@ -41,7 +41,7 @@ export function TransferModal({ open, onOpenChange, entry, record }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] rounded-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100vw-1rem)] max-w-none sm:max-w-[500px] rounded-2xl max-h-[calc(100dvh-1rem)] sm:max-h-[90vh] overflow-y-auto overscroll-contain p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Edit Referral' : 'Refer to Facility'}</DialogTitle>
           <DialogDescription>
@@ -84,7 +84,7 @@ export function TransferModal({ open, onOpenChange, entry, record }: Props) {
         >
           {({ isSubmitting, values, setFieldValue, errors, touched }) => (
             <Form className="space-y-4 pt-2">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label>Facility *</Label>
                   <Field as={Input} name="referredToFacility" placeholder="e.g. District Hospital" className="rounded-xl" />
@@ -147,11 +147,11 @@ export function TransferModal({ open, onOpenChange, entry, record }: Props) {
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2">
-                <Button type="button" variant="outline" className="rounded-xl" onClick={() => onOpenChange(false)}>
+              <div className="grid grid-cols-1 gap-2 pt-2 sm:flex sm:justify-end">
+                <Button type="button" variant="outline" className="h-11 w-full rounded-xl sm:w-auto" onClick={() => onOpenChange(false)}>
                   Cancel
                 </Button>
-                <Button type="submit" className="rounded-xl" disabled={isSubmitting}>
+                <Button type="submit" className="h-11 w-full rounded-xl sm:w-auto" disabled={isSubmitting}>
                   {isSubmitting ? 'Saving…' : isEditing ? 'Update Referral' : 'Save Referral'}
                 </Button>
               </div>

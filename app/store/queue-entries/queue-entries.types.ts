@@ -33,6 +33,7 @@ export interface ObservationRecord {
   id: string;
   chiefComplaint: string;
   diagnosis: string;
+  diagnosisCode?: string | null;
   treatmentGiven: string | null;
   followUpRequired: boolean;
   followUpNotes?: string | null;
@@ -107,4 +108,8 @@ export interface QueueEntriesState {
   queueError: string | null;
   chart: PatientChart | null;
   isLoadingChart: boolean;
+  queueScope: {
+    source: 'INDIVIDUAL' | 'TEAM' | 'NONE' | 'ALL';
+    stations: { id: string; name: string }[];
+  } | null;
 }
