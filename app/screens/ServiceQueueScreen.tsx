@@ -2,13 +2,15 @@
 
 import { useEffect, useState, useCallback, type ElementType } from 'react';
 import { useRouter } from 'next/navigation';
-import { Clock, RefreshCw, AlertTriangle, CheckCircle2, XCircle, ArrowRight, MoreHorizontal, Stethoscope, FlaskConical, Ambulance, Play } from 'lucide-react';
+import { Clock, RefreshCw, AlertTriangle, CheckCircle2, XCircle, ArrowRight, MoreHorizontal, Stethoscope, FlaskConical, Ambulance, Play, Search, X } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/app/hooks/redux';
+import { useDebounce } from '@/app/hooks/useDebounce';
 import { fetchMyQueue, updateQueueStatus } from '@/app/store/queue-entries';
 import { fetchStations } from '@/app/store/stations';
 import { QueueEntry, QueuePriority, QueueStatus } from '@/app/store/queue-entries/queue-entries.types';
 import { Button } from '@/app/components/ui/button';
 import { Badge } from '@/app/components/ui/badge';
+import { Input } from '@/app/components/ui/input';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/app/components/ui/select';
@@ -60,6 +62,8 @@ export default function ServiceQueueScreen() {
 
   const [stationFilter, setStationFilter] = useState<string | undefined>(undefined);
   const [statusFilter, setStatusFilter] = useState<string>('active');
+  const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearch = useDebounce(searchTerm, 400);
 
   // Modal state
   const [queueModalOpen, setQueueModalOpen] = useState(false);
@@ -74,8 +78,9 @@ export default function ServiceQueueScreen() {
     if (!isClinical && stationFilter && stationFilter !== 'unassigned') params.currentStationId = stationFilter;
     if (activeOutreachId) params.outreachId = activeOutreachId;
     if (statusFilter !== 'active' && statusFilter !== 'all') params.status = statusFilter;
+    if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
     dispatch(fetchMyQueue(params));
-  }, [dispatch, isClinical, stationFilter, activeOutreachId, statusFilter]);
+  }, [dispatch, isClinical, stationFilter, activeOutreachId, statusFilter, debouncedSearch]);
 
   useEffect(() => {
     dispatch(fetchStations({ limit: 100, outreachId: activeOutreachId || undefined }));
@@ -179,6 +184,27 @@ export default function ServiceQueueScreen() {
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row items-center gap-3 bg-white/50 dark:bg-black/20 backdrop-blur-sm p-4 rounded-2xl border border-border/50 shadow-sm">
+        <div className="relative w-full sm:max-w-80">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="search"
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder="Search patient name or ID..."
+            aria-label="Search queue by patient name or registration number"
+            className="h-10 rounded-xl bg-white/50 dark:bg-black/50 border-border pl-9 pr-9"
+          />
+          {searchTerm && (
+            <button
+              type="button"
+              onClick={() => setSearchTerm('')}
+              aria-label="Clear patient search"
+              className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
         {!isClinical && (
           <div className="w-full sm:max-w-55">
             <Select value={stationFilter ?? 'all'} onValueChange={(v) => setStationFilter(v === 'all' ? undefined : v)}>
@@ -218,7 +244,9 @@ export default function ServiceQueueScreen() {
         )}
         {!isLoadingQueue && displayEntries.length === 0 && (
           <div className="text-center text-muted-foreground py-16 bg-white/60 dark:bg-black/40 rounded-2xl border border-border/50">
-            No patients in queue.
+            {debouncedSearch
+              ? `No patients found for "${debouncedSearch}".`
+              : 'No patients in queue.'}
           </div>
         )}
         {displayEntries.map((entry) => {
