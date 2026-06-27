@@ -6,6 +6,9 @@ export const fetchLabResultsRequest = (params?: Record<string, unknown>) =>
 export const createLabResultRequest = (data: unknown) =>
   processRequest({ method: 'POST', url: 'lab-results', data });
 
+export const bulkCreateLabResultRequest = (data: unknown) =>
+  processRequest({ method: 'POST', url: 'lab-results/bulk', data });
+
 export const updateLabResultRequest = (id: string, data: unknown) =>
   processRequest({ method: 'PATCH', url: `lab-results/${id}`, data });
 

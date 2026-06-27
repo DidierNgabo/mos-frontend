@@ -15,6 +15,13 @@ export const createLabResult = createAsyncThunk(
     catch (e: any) { return rejectWithValue(e?.message || 'Failed'); }
   },
 );
+export const bulkCreateLabResult = createAsyncThunk(
+  'labResults/bulkCreate',
+  async (data: unknown, { rejectWithValue }) => {
+    try { return await LabResultsSource.bulkCreateLabResultRequest(data); }
+    catch (e: any) { return rejectWithValue(e?.message || 'Failed'); }
+  },
+);
 export const updateLabResult = createAsyncThunk(
   'labResults/update',
   async ({ id, data }: { id: string; data: unknown }, { rejectWithValue }) => {
@@ -39,6 +46,7 @@ const slice = createSlice({
      .addCase(fetchLabResults.fulfilled, (s, { payload }) => { s.isLoading = false; s.list = payload?.items || []; s.totalNumItems = payload?.totalNumItems || 0; })
      .addCase(fetchLabResults.rejected, (s, a) => { s.isLoading = false; s.error = (a.payload as string) ?? null; })
      .addCase(createLabResult.fulfilled, (s) => { s.isLoading = false; })
+     .addCase(bulkCreateLabResult.fulfilled, (s) => { s.isLoading = false; })
      .addCase(updateLabResult.fulfilled, (s) => { s.isLoading = false; })
      .addCase(deleteLabResult.fulfilled, (s) => { s.isLoading = false; });
   },
