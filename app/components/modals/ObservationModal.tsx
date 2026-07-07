@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
 import {
@@ -8,9 +9,13 @@ import {
 import { Button } from '@/app/components/ui/button';
 import { Label } from '@/app/components/ui/label';
 import { Switch } from '@/app/components/ui/switch';
-import { useAppDispatch } from '@/app/hooks/redux';
+import { useAppDispatch, useAppSelector } from '@/app/hooks/redux';
 import { createObservation, updateObservation } from '@/app/store/observations';
+import { moveQueueEntry } from '@/app/store/queue-entries';
+import { fetchStations } from '@/app/store/stations';
 import { ObservationRecord, QueueEntry } from '@/app/store/queue-entries/queue-entries.types';
+import { StationMoveSection } from '@/app/components/modals/shared/StationMoveSection';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { DiagnosisCombobox } from '@/app/components/observations/DiagnosisCombobox';
 
@@ -32,7 +37,22 @@ interface Props {
 
 export function ObservationModal({ open, onOpenChange, entry, record }: Props) {
   const dispatch = useAppDispatch();
+  const router = useRouter();
+  const { list: allStations } = useAppSelector((s) => s.stations);
+  const [moveStationId, setMoveStationId] = useState('');
+  const submitIntent = useRef<'save' | 'saveAndMove'>('save');
   const isEditing = !!record;
+
+  const availableStations = entry
+    ? allStations.filter((s) => (s as any).outreach?.id === entry.outreach.id && s.id !== entry.currentStation?.id)
+    : [];
+
+  useEffect(() => {
+    if (!open || !entry) return;
+    setMoveStationId('');
+    submitIntent.current = 'save';
+    dispatch(fetchStations({ outreachId: entry.outreach.id, isActive: true, limit: 100 }));
+  }, [open, entry, dispatch]);
 
   if (!entry) return null;
 
@@ -74,7 +94,14 @@ export function ObservationModal({ open, onOpenChange, entry, record }: Props) {
                 toast.success('Observation saved');
               }
               resetForm();
-              onOpenChange(false);
+              if (submitIntent.current === 'saveAndMove' && !isEditing && moveStationId) {
+                await dispatch(moveQueueEntry({ id: entry.id, data: { stationId: moveStationId } })).unwrap();
+                toast.success('Patient moved successfully');
+                onOpenChange(false);
+                router.push('/service-queue');
+              } else {
+                onOpenChange(false);
+              }
             } catch (error: unknown) {
               toast.error(
                 typeof error === 'string'
@@ -86,7 +113,7 @@ export function ObservationModal({ open, onOpenChange, entry, record }: Props) {
             }
           }}
         >
-          {({ isSubmitting, values, setFieldValue, errors, touched }) => (
+          {({ isSubmitting, values, setFieldValue, errors, touched, submitForm }) => (
             <Form className="space-y-4 pt-2">
               <div className="space-y-1.5">
                 <Label>Chief Complaint *</Label>
@@ -162,11 +189,30 @@ export function ObservationModal({ open, onOpenChange, entry, record }: Props) {
                   />
                 </div>
               )}
+              {!isEditing && (
+                <StationMoveSection
+                  stations={availableStations}
+                  value={moveStationId}
+                  onChange={setMoveStationId}
+                  currentStationId={entry.currentStation?.id}
+                />
+              )}
               <div className="grid grid-cols-1 gap-2 pt-2 sm:flex sm:justify-end">
                 <Button type="button" variant="outline" className="h-11 w-full rounded-xl sm:w-auto" onClick={() => onOpenChange(false)}>Cancel</Button>
-                <Button type="submit" className="h-11 w-full rounded-xl sm:w-auto" disabled={isSubmitting}>
-                  {isSubmitting ? 'Saving…' : isEditing ? 'Update Observation' : 'Save Observation'}
+                <Button type="button" variant="outline" className="h-11 w-full rounded-xl sm:w-auto" disabled={isSubmitting}
+                  onClick={() => { submitIntent.current = 'save'; submitForm(); }}>
+                  {isSubmitting && submitIntent.current === 'save' ? 'Saving…' : isEditing ? 'Update Observation' : 'Save Observation'}
                 </Button>
+                {!isEditing && (
+                  <Button type="button" className="h-11 w-full rounded-xl sm:w-auto" disabled={isSubmitting}
+                    onClick={() => {
+                      if (!moveStationId) { toast.error('Select a destination station first'); return; }
+                      submitIntent.current = 'saveAndMove';
+                      submitForm();
+                    }}>
+                    {isSubmitting && submitIntent.current === 'saveAndMove' ? 'Saving…' : 'Save & Move →'}
+                  </Button>
+                )}
               </div>
             </Form>
           )}

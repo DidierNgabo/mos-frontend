@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
 import {
@@ -15,7 +15,11 @@ import { Button } from '@/app/components/ui/button';
 import { Label } from '@/app/components/ui/label';
 import { Badge } from '@/app/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { useAppDispatch } from '@/app/hooks/redux';
+import { useAppDispatch, useAppSelector } from '@/app/hooks/redux';
+import { moveQueueEntry } from '@/app/store/queue-entries';
+import { fetchStations } from '@/app/store/stations';
+import { StationMoveSection } from '@/app/components/modals/shared/StationMoveSection';
+import { useRouter } from 'next/navigation';
 import {
   createPHQ9Screening,
   updatePHQ9Screening,
@@ -611,7 +615,22 @@ export function MentalHealthScreeningModal({
   onSaved,
 }: Props) {
   const dispatch = useAppDispatch();
+  const router = useRouter();
+  const { list: allStations } = useAppSelector((s) => s.stations);
   const [step, setStep] = useState(0);
+  const [moveStationId, setMoveStationId] = useState('');
+  const submitIntent = useRef<'save' | 'saveAndMove'>('save');
+
+  const availableStations = entry
+    ? allStations.filter((s) => (s as any).outreach?.id === entry.outreach.id && s.id !== entry.currentStation?.id)
+    : [];
+
+  useEffect(() => {
+    if (!open || !entry) return;
+    setMoveStationId('');
+    submitIntent.current = 'save';
+    dispatch(fetchStations({ outreachId: entry.outreach.id, isActive: true, limit: 100 }));
+  }, [open, entry, dispatch]);
 
   const age = patientAge(entry?.patient.dateOfBirth);
   const isAdult = age >= 18;
@@ -826,7 +845,14 @@ export function MentalHealthScreeningModal({
                 isEditing ? 'Isuzuma ryahinduwe' : 'Isuzuma ryanditswe',
               );
               onSaved();
-              handleClose();
+              if (submitIntent.current === 'saveAndMove' && !isEditing && moveStationId) {
+                await dispatch(moveQueueEntry({ id: entry.id, data: { stationId: moveStationId } })).unwrap();
+                toast.success('Patient moved successfully');
+                handleClose();
+                router.push('/service-queue');
+              } else {
+                handleClose();
+              }
             } catch {
               toast.error('Habaye ikosa. Ongera ugerageze.');
             } finally {
@@ -834,7 +860,7 @@ export function MentalHealthScreeningModal({
             }
           }}
         >
-          {({ values, setFieldValue, isSubmitting }) => {
+          {({ values, setFieldValue, isSubmitting, submitForm }) => {
             const demographicsComplete = hasCompleteDemographics(values);
 
             return (
@@ -862,8 +888,16 @@ export function MentalHealthScreeningModal({
                 </div>
 
                 {/* Footer buttons */}
-                <div className="shrink-0 border-t border-border/50 bg-background/95 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur sm:px-6 sm:py-4">
-                  <div className="grid grid-cols-2 gap-3">
+                <div className="shrink-0 border-t border-border/50 bg-background/95 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur sm:px-6 sm:py-4 space-y-3">
+                  {step === totalSteps - 1 && !isEditing && (
+                    <StationMoveSection
+                      stations={availableStations}
+                      value={moveStationId}
+                      onChange={setMoveStationId}
+                      currentStationId={entry.currentStation?.id}
+                    />
+                  )}
+                  <div className={step === totalSteps - 1 && !isEditing ? 'grid grid-cols-1 gap-2 sm:flex sm:justify-end' : 'grid grid-cols-2 gap-3'}>
                     <Button
                       type="button"
                       variant="outline"
@@ -895,17 +929,31 @@ export function MentalHealthScreeningModal({
                         <ChevronRight className="h-4 w-4 ml-1" />
                       </Button>
                     ) : (
-                      <Button
-                        type="submit"
-                        className="h-12 rounded-xl text-sm"
-                        disabled={isSubmitting}
-                      >
-                        {isSubmitting
-                          ? 'Saving...'
-                          : isEditing
-                            ? 'Update'
-                            : 'Save'}
-                      </Button>
+                      <>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="h-12 rounded-xl text-sm sm:w-auto"
+                          disabled={isSubmitting}
+                          onClick={() => { submitIntent.current = 'save'; submitForm(); }}
+                        >
+                          {isSubmitting && submitIntent.current === 'save' ? 'Saving...' : isEditing ? 'Update' : 'Save'}
+                        </Button>
+                        {!isEditing && (
+                          <Button
+                            type="button"
+                            className="h-12 rounded-xl text-sm sm:w-auto"
+                            disabled={isSubmitting}
+                            onClick={() => {
+                              if (!moveStationId) { toast.error('Select a destination station first'); return; }
+                              submitIntent.current = 'saveAndMove';
+                              submitForm();
+                            }}
+                          >
+                            {isSubmitting && submitIntent.current === 'saveAndMove' ? 'Saving...' : 'Save & Move →'}
+                          </Button>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>

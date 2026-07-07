@@ -14,20 +14,20 @@ export interface AdminStats {
 export interface DoctorStats {
   consultationsDoneToday: number;
   consultationsDoneOutreach: number;
-  patientsWaitingInMyQueue: number;
-  avgConsultationMinutes: number;
+  activeQueuePatientsOutreach: number;
+  avgQueueToObservationMinutes: number;
   followUpsRecommended: number;
   transfersInitiated: number;
-  emergencyCasesHandled: number;
+  completedEmergencyCasesOutreach: number;
   formsCompleted: { phq9: number; gad7: number; labs: number };
   myTopDiagnoses: { diagnosis: string; count: number }[];
   abnormalVitalsFlagged: number;
 }
 
 export interface ClerkStats {
-  registeredToday: number;
-  registeredOutreach: number;
-  registrationsPerHour: { hour: string; count: number }[];
+  patientsRegisteredToday: number;
+  patientsRegisteredInPeriod: number;
+  patientRegistrationsPerHour: { hour: string; count: number }[];
   genderBreakdown: { gender: string; count: number }[];
   enqueuedCount: number;
   pendingEnqueue: number;
@@ -36,7 +36,7 @@ export interface ClerkStats {
 }
 
 export interface PharmacistStats {
-  itemsDispensedToday: number;
+  unitsDispensedToday: number;
   uniquePatientsServed: number;
   lowStockItems: { medicationName: string; quantityInStock: number; threshold: number }[];
   outOfStockItems: { medicationName: string }[];

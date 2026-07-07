@@ -41,6 +41,8 @@ import { Separator } from '@/app/components/ui/separator';
 import { RoleGuard } from '@/app/components/auth/RoleGuard';
 import { RoleType } from '@/app/utils/roleUtils';
 import { useRole } from '@/app/hooks/useRole';
+import { StatisticsChatDrawer } from '@/app/components/ai/StatisticsChatDrawer';
+import { clearAiChatSessions } from '@/app/source/AiSource';
 
 const navItems: {
   href: string;
@@ -292,6 +294,7 @@ export default function DashboardShell({
   }, [isAuthenticated, authUser?.mustChangePassword, router]);
 
   const handleSignOut = async () => {
+    clearAiChatSessions();
     dispatch(clearOutreachContext());
     await dispatch(logoutUser());
     window.location.href = '/login';
@@ -300,6 +303,7 @@ export default function DashboardShell({
   useIdleTimer({
     timeout: 30 * 60 * 1000, // 30 minutes
     onIdle: async () => {
+      clearAiChatSessions();
       dispatch(clearOutreachContext());
       await dispatch(logoutUser());
       window.location.href = '/login?reason=idle';
@@ -436,6 +440,7 @@ export default function DashboardShell({
           <div className="flex-1 md:hidden" />
 
           <div className="flex items-center gap-3">
+            <StatisticsChatDrawer />
             <Button
               variant="ghost"
               size="icon"

@@ -250,7 +250,7 @@ function DoctorDashboardView({ stats, isLoading }: { stats: DoctorStats | null; 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
         <StatCard label="Consultations Today" value={stats?.consultationsDoneToday ?? 0} icon={Stethoscope} color="from-emerald-500/20 to-emerald-500/5" textColor="text-emerald-600" bg="bg-emerald-500/10" isLoading={isLoading} />
         <StatCard label="Total Consultations" value={stats?.consultationsDoneOutreach ?? 0} icon={Users} color="from-blue-500/20 to-blue-500/5" textColor="text-blue-600" bg="bg-blue-500/10" isLoading={isLoading} />
-        <StatCard label="Avg Consult (min)" value={stats?.avgConsultationMinutes ?? 0} icon={Clock} color="from-amber-500/20 to-amber-500/5" textColor="text-amber-600" bg="bg-amber-500/10" isLoading={isLoading} />
+        <StatCard label="Queue → Observation (min)" value={stats?.avgQueueToObservationMinutes ?? 0} icon={Clock} color="from-amber-500/20 to-amber-500/5" textColor="text-amber-600" bg="bg-amber-500/10" isLoading={isLoading} />
         <StatCard label="Follow-ups" value={stats?.followUpsRecommended ?? 0} icon={ClipboardList} color="from-violet-500/20 to-violet-500/5" textColor="text-violet-600" bg="bg-violet-500/10" isLoading={isLoading} />
         <StatCard label="Transfers Initiated" value={stats?.transfersInitiated ?? 0} icon={ArrowRightLeft} color="from-rose-500/20 to-rose-500/5" textColor="text-rose-600" bg="bg-rose-500/10" isLoading={isLoading} />
       </div>
@@ -300,7 +300,7 @@ function DoctorDashboardView({ stats, isLoading }: { stats: DoctorStats | null; 
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2">
-        <StatCard label="Active Queue (Outreach)" value={stats?.patientsWaitingInMyQueue ?? 0} icon={ListOrdered} color="from-cyan-500/20 to-cyan-500/5" textColor="text-cyan-600" bg="bg-cyan-500/10" isLoading={isLoading} />
+        <StatCard label="Active Queue (Outreach)" value={stats?.activeQueuePatientsOutreach ?? 0} icon={ListOrdered} color="from-cyan-500/20 to-cyan-500/5" textColor="text-cyan-600" bg="bg-cyan-500/10" isLoading={isLoading} />
         <StatCard label="Abnormal Vitals Flagged" value={stats?.abnormalVitalsFlagged ?? 0} icon={AlertTriangle} color="from-orange-500/20 to-orange-500/5" textColor="text-orange-600" bg="bg-orange-500/10" isLoading={isLoading} />
       </div>
     </div>
@@ -312,13 +312,13 @@ function DoctorDashboardView({ stats, isLoading }: { stats: DoctorStats | null; 
 function ClerkDashboardView({ stats, isLoading }: { stats: ClerkStats | null; isLoading: boolean }) {
   const genderData = (stats?.genderBreakdown ?? []).map((g) => ({ name: g.gender, value: g.count }));
   const ageData = (stats?.ageGroups ?? []).map((a) => ({ name: a.ageGroup, count: a.count }));
-  const hourData = stats?.registrationsPerHour ?? [];
+  const hourData = stats?.patientRegistrationsPerHour ?? [];
 
   return (
     <div className="space-y-6">
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Registered Today" value={stats?.registeredToday ?? 0} icon={UserPlus} color="from-emerald-500/20 to-emerald-500/5" textColor="text-emerald-600" bg="bg-emerald-500/10" isLoading={isLoading} />
-        <StatCard label="Total Registered" value={stats?.registeredOutreach ?? 0} icon={Users} color="from-blue-500/20 to-blue-500/5" textColor="text-blue-600" bg="bg-blue-500/10" isLoading={isLoading} />
+        <StatCard label="Patients Registered Today" value={stats?.patientsRegisteredToday ?? 0} icon={UserPlus} color="from-emerald-500/20 to-emerald-500/5" textColor="text-emerald-600" bg="bg-emerald-500/10" isLoading={isLoading} />
+        <StatCard label="Patients Registered" value={stats?.patientsRegisteredInPeriod ?? 0} icon={Users} color="from-blue-500/20 to-blue-500/5" textColor="text-blue-600" bg="bg-blue-500/10" isLoading={isLoading} />
         <StatCard label="Enqueued" value={stats?.enqueuedCount ?? 0} icon={ListOrdered} color="from-violet-500/20 to-violet-500/5" textColor="text-violet-600" bg="bg-violet-500/10" isLoading={isLoading} />
         <StatCard label="Pending Enqueue" value={stats?.pendingEnqueue ?? 0} icon={ClipboardList} color="from-amber-500/20 to-amber-500/5" textColor="text-amber-600" bg="bg-amber-500/10" isLoading={isLoading} />
       </div>
@@ -426,7 +426,7 @@ function PharmacistDashboardView({ stats, isLoading }: { stats: PharmacistStats 
   return (
     <div className="space-y-6">
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Dispensed Today" value={stats?.itemsDispensedToday ?? 0} icon={Pill} color="from-emerald-500/20 to-emerald-500/5" textColor="text-emerald-600" bg="bg-emerald-500/10" isLoading={isLoading} />
+        <StatCard label="Units Dispensed Today" value={stats?.unitsDispensedToday ?? 0} icon={Pill} color="from-emerald-500/20 to-emerald-500/5" textColor="text-emerald-600" bg="bg-emerald-500/10" isLoading={isLoading} />
         <StatCard label="Patients Served" value={stats?.uniquePatientsServed ?? 0} icon={Users} color="from-blue-500/20 to-blue-500/5" textColor="text-blue-600" bg="bg-blue-500/10" isLoading={isLoading} />
         <StatCard label="Low Stock Items" value={stats?.lowStockItems.length ?? 0} icon={Package} color="from-amber-500/20 to-amber-500/5" textColor="text-amber-600" bg="bg-amber-500/10" isLoading={isLoading} />
         <StatCard label="Out of Stock" value={stats?.outOfStockItems.length ?? 0} icon={PackageX} color="from-rose-500/20 to-rose-500/5" textColor="text-rose-600" bg="bg-rose-500/10" isLoading={isLoading} />

@@ -580,14 +580,16 @@ export default function PatientChartScreen({ entryId }: Props) {
                 <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-4">
                   <MobileField label="Blood pressure">
                     <span className="font-mono font-semibold">
-                      {v.bloodPressureSystolic}/{v.bloodPressureDiastolic} mmHg
+                      {v.bloodPressureSystolic != null && v.bloodPressureDiastolic != null
+                        ? `${v.bloodPressureSystolic}/${v.bloodPressureDiastolic} mmHg`
+                        : '—'}
                     </span>
                   </MobileField>
-                  <MobileField label="Pulse">{v.pulseRate} bpm</MobileField>
+                  <MobileField label="Pulse">{v.pulseRate != null ? `${v.pulseRate} bpm` : '—'}</MobileField>
                   <MobileField label="Temperature">
                     {v.temperature} °C
                   </MobileField>
-                  <MobileField label="Weight">{v.weight} kg</MobileField>
+                  <MobileField label="Weight">{v.weight != null ? `${v.weight} kg` : '—'}</MobileField>
                   <MobileField label="O₂ saturation">
                     {v.oxygenSaturation != null
                       ? `${v.oxygenSaturation}%`
@@ -644,11 +646,13 @@ export default function PatientChartScreen({ entryId }: Props) {
                     {new Date(v.createdAt).toLocaleDateString()}
                   </td>
                   <td className="px-4 py-2.5 font-mono font-medium">
-                    {v.bloodPressureSystolic}/{v.bloodPressureDiastolic}
+                    {v.bloodPressureSystolic != null && v.bloodPressureDiastolic != null
+                      ? `${v.bloodPressureSystolic}/${v.bloodPressureDiastolic}`
+                      : '—'}
                   </td>
-                  <td className="px-4 py-2.5">{v.pulseRate} bpm</td>
+                  <td className="px-4 py-2.5">{v.pulseRate != null ? `${v.pulseRate} bpm` : '—'}</td>
                   <td className="px-4 py-2.5">{v.temperature}</td>
-                  <td className="px-4 py-2.5">{v.weight}</td>
+                  <td className="px-4 py-2.5">{v.weight ?? '—'}</td>
                   <td className="px-4 py-2.5">
                     <BmiBadge bmi={v.bmi} />
                   </td>
@@ -1215,11 +1219,12 @@ export default function PatientChartScreen({ entryId }: Props) {
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <p className="font-semibold">
-                    {rx.pharmacyStock.medicationName}
+                    {rx.pharmacyStock?.medicationName ?? rx.customMedicationName}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {rx.pharmacyStock.genericName} ·{' '}
-                    {rx.pharmacyStock.strength}
+                    {rx.pharmacyStock
+                      ? `${rx.pharmacyStock.genericName} · ${rx.pharmacyStock.strength}`
+                      : 'External / Custom'}
                   </p>
                 </div>
                 <PrescriptionStatusBadge
@@ -1233,7 +1238,7 @@ export default function PatientChartScreen({ entryId }: Props) {
                 </MobileField>
                 <MobileField label="Dosage">{rx.dosage}</MobileField>
                 <MobileField label="Quantity">
-                  {rx.quantity} {rx.pharmacyStock.unitOfMeasure}
+                  {rx.quantity} {rx.pharmacyStock?.unitOfMeasure ?? ''}
                 </MobileField>
                 <MobileField label="Prescribed by">
                   {rx.prescribedBy.firstName} {rx.prescribedBy.lastName}
@@ -1401,6 +1406,7 @@ export default function PatientChartScreen({ entryId }: Props) {
       {/* Modals */}
       <VitalSignModal
         open={vitalModal}
+        entry={entry as any}
         onOpenChange={(open) => {
           if (!open) closeModal.vital();
           else setVitalModal(true);
@@ -1528,14 +1534,16 @@ function PrescriptionRow({
         {new Date(rx.createdAt).toLocaleDateString()}
       </td>
       <td className="px-4 py-2.5">
-        <div className="font-medium">{rx.pharmacyStock.medicationName}</div>
+        <div className="font-medium">{rx.pharmacyStock?.medicationName ?? rx.customMedicationName}</div>
         <div className="text-muted-foreground">
-          {rx.pharmacyStock.genericName} · {rx.pharmacyStock.strength}
+          {rx.pharmacyStock
+            ? `${rx.pharmacyStock.genericName} · ${rx.pharmacyStock.strength}`
+            : 'External / Custom'}
         </div>
       </td>
       <td className="px-4 py-2.5">{rx.dosage}</td>
       <td className="px-4 py-2.5">
-        {rx.quantity} {rx.pharmacyStock.unitOfMeasure}
+        {rx.quantity} {rx.pharmacyStock?.unitOfMeasure ?? ''}
       </td>
       <td className="px-4 py-2.5 max-w-36 truncate text-muted-foreground">
         {rx.instructions ?? '—'}
@@ -1567,7 +1575,8 @@ function PrescriptionRow({
   );
 }
 
-function BmiBadge({ bmi }: { bmi: number }) {
+function BmiBadge({ bmi }: { bmi: number | null }) {
+  if (bmi == null) return <span className="text-muted-foreground text-xs">—</span>;
   if (bmi < 18.5)
     return (
       <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/20 text-xs">

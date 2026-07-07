@@ -77,7 +77,8 @@ export type PrescriptionStatus = 'PENDING' | 'DISPENSED' | 'CANCELLED';
 
 export interface PrescriptionRecord {
   id: string;
-  pharmacyStock: { id: string; medicationName: string; genericName: string; dosageForm: string; strength: string; unitOfMeasure: string; quantityInStock: number };
+  pharmacyStock: { id: string; medicationName: string; genericName: string; dosageForm: string; strength: string; unitOfMeasure: string; quantityInStock: number } | null;
+  customMedicationName: string | null;
   dosage: string;
   quantity: number;
   instructions: string | null;

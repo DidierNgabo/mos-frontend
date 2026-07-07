@@ -40,6 +40,7 @@ import { toast } from 'sonner';
 export default function UsersScreen() {
   const dispatch = useAppDispatch();
   const { list: users, totalNumItems, isLoadingUsers, isDeletingUser } = useAppSelector((state) => state.users);
+  const { activeOutreachId } = useAppSelector((s) => s.outreachContext);
 
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearch = useDebounce(searchTerm, 500);
@@ -69,12 +70,17 @@ export default function UsersScreen() {
       offset,
       search: debouncedSearch || undefined,
       isActive: isActiveFilter,
+      outreachId: activeOutreachId || undefined,
     }));
   };
 
   useEffect(() => {
+    setOffset(0);
+  }, [activeOutreachId]);
+
+  useEffect(() => {
     loadData();
-  }, [dispatch, offset, debouncedSearch, isActiveFilter]);
+  }, [dispatch, offset, debouncedSearch, isActiveFilter, activeOutreachId]);
 
   const handlePageChange = (newOffset: number) => {
     setOffset(newOffset);

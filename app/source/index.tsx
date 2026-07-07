@@ -18,6 +18,7 @@ import * as PCL5ScreeningsSource from './PCL5ScreeningsSource';
 import * as TeamsSource from './TeamsSource';
 import * as StatsSource from './StatsSource';
 import * as EvangelismRecordsSource from './EvangelismRecordsSource';
+import * as AiSource from './AiSource';
 
 import { processRequest } from './processor';
 
@@ -42,5 +43,6 @@ export {
   TeamsSource,
   StatsSource,
   EvangelismRecordsSource,
+  AiSource,
   processRequest,
 };

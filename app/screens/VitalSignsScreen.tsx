@@ -50,7 +50,8 @@ import { ConfirmDeleteDialog } from '@/app/components/modals/ConfirmDeleteDialog
 import { Can } from '@/app/components/auth/Can';
 import { toast } from 'sonner';
 
-function BmiBadge({ bmi }: { bmi: number }) {
+function BmiBadge({ bmi }: { bmi: number | null }) {
+  if (bmi == null) return <span className="text-muted-foreground text-xs">—</span>;
   if (bmi < 18.5)
     return <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/20">{bmi.toFixed(1)} UW</Badge>;
   if (bmi < 25)

@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
 import { FieldArray, Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
 import {
@@ -12,9 +13,13 @@ import { Switch } from '@/app/components/ui/switch';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/app/components/ui/select';
-import { useAppDispatch } from '@/app/hooks/redux';
-import { bulkCreateLabResult, createLabResult, updateLabResult } from '@/app/store/lab-results';
+import { useAppDispatch, useAppSelector } from '@/app/hooks/redux';
+import { bulkCreateLabResult, updateLabResult } from '@/app/store/lab-results';
+import { moveQueueEntry } from '@/app/store/queue-entries';
+import { fetchStations } from '@/app/store/stations';
 import { LabResultRecord, QueueEntry } from '@/app/store/queue-entries/queue-entries.types';
+import { StationMoveSection } from '@/app/components/modals/shared/StationMoveSection';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
 const LAB_TEST_TYPES = [
@@ -59,7 +64,22 @@ interface Props {
 
 export function LabResultModal({ open, onOpenChange, entry, record }: Props) {
   const dispatch = useAppDispatch();
+  const router = useRouter();
+  const { list: allStations } = useAppSelector((s) => s.stations);
+  const [moveStationId, setMoveStationId] = useState('');
+  const submitIntent = useRef<'save' | 'saveAndMove'>('save');
   const isEditing = !!record;
+
+  const availableStations = entry
+    ? allStations.filter((s) => (s as any).outreach?.id === entry.outreach.id && s.id !== entry.currentStation?.id)
+    : [];
+
+  useEffect(() => {
+    if (!open || !entry) return;
+    setMoveStationId('');
+    submitIntent.current = 'save';
+    dispatch(fetchStations({ outreachId: entry.outreach.id, isActive: true, limit: 100 }));
+  }, [open, entry, dispatch]);
 
   if (!entry) return null;
 
@@ -135,13 +155,20 @@ export function LabResultModal({ open, onOpenChange, entry, record }: Props) {
               await dispatch(bulkCreateLabResult({
                 queueEntryId: entry.id,
                 patientId: entry.patient.id,
-                stationId: entry.currentStation?.id || '',
+                stationId: entry.currentStation?.id || undefined,
                 outreachId: entry.outreach.id,
                 results: values.results,
               })).unwrap();
               toast.success(`${values.results.length} lab result${values.results.length > 1 ? 's' : ''} saved`);
               resetForm();
-              onOpenChange(false);
+              if (submitIntent.current === 'saveAndMove' && moveStationId) {
+                await dispatch(moveQueueEntry({ id: entry.id, data: { stationId: moveStationId } })).unwrap();
+                toast.success('Patient moved successfully');
+                onOpenChange(false);
+                router.push('/service-queue');
+              } else {
+                onOpenChange(false);
+              }
             } catch (err: any) {
               toast.error(err || 'Failed to save lab results');
             } finally {
@@ -149,7 +176,7 @@ export function LabResultModal({ open, onOpenChange, entry, record }: Props) {
             }
           }}
         >
-          {({ isSubmitting, values, setFieldValue, errors, touched }) => (
+          {({ isSubmitting, values, setFieldValue, errors, touched, submitForm }) => (
             <Form className="space-y-3 pt-2">
               <FieldArray name="results">
                 {(arrayHelpers) => (
@@ -198,10 +225,25 @@ export function LabResultModal({ open, onOpenChange, entry, record }: Props) {
                   </>
                 )}
               </FieldArray>
+              <StationMoveSection
+                stations={availableStations}
+                value={moveStationId}
+                onChange={setMoveStationId}
+                currentStationId={entry.currentStation?.id}
+              />
               <div className="grid grid-cols-1 gap-2 pt-2 sm:flex sm:justify-end">
                 <Button type="button" variant="outline" className="h-11 w-full rounded-xl sm:w-auto" onClick={() => onOpenChange(false)}>Cancel</Button>
-                <Button type="submit" className="h-11 w-full rounded-xl sm:w-auto" disabled={isSubmitting}>
-                  {isSubmitting ? 'Saving…' : `Save ${values.results.length > 1 ? `All ${values.results.length} Results` : 'Result'}`}
+                <Button type="button" variant="outline" className="h-11 w-full rounded-xl sm:w-auto" disabled={isSubmitting}
+                  onClick={() => { submitIntent.current = 'save'; submitForm(); }}>
+                  {isSubmitting && submitIntent.current === 'save' ? 'Saving…' : `Save ${values.results.length > 1 ? `All ${values.results.length} Results` : 'Result'}`}
+                </Button>
+                <Button type="button" className="h-11 w-full rounded-xl sm:w-auto" disabled={isSubmitting}
+                  onClick={() => {
+                    if (!moveStationId) { toast.error('Select a destination station first'); return; }
+                    submitIntent.current = 'saveAndMove';
+                    submitForm();
+                  }}>
+                  {isSubmitting && submitIntent.current === 'saveAndMove' ? 'Saving…' : 'Save & Move →'}
                 </Button>
               </div>
             </Form>

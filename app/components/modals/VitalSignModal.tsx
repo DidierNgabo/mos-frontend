@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import {
@@ -25,7 +25,11 @@ import { Textarea } from '@/app/components/ui/textarea';
 import { useAppDispatch, useAppSelector } from '@/app/hooks/redux';
 import { fetchPatients } from '@/app/store/patients';
 import { fetchStations } from '@/app/store/stations';
+import { moveQueueEntry } from '@/app/store/queue-entries';
+import { QueueEntry } from '@/app/store/queue-entries/queue-entries.types';
 import { VitalSign } from '@/app/store/vital-signs/vital-signs.types';
+import { StationMoveSection } from '@/app/components/modals/shared/StationMoveSection';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
 interface VitalSignModalProps {
@@ -34,54 +38,49 @@ interface VitalSignModalProps {
   mode: 'create' | 'edit' | 'view';
   initialData?: VitalSign | null;
   onSubmit: (values: any) => Promise<void>;
+  entry?: QueueEntry | null;
 }
 
-const schema = Yup.object({
-  patientId: Yup.string().required('Patient is required'),
-  stationId: Yup.string().required('Station is required'),
-  bloodPressureSystolic: Yup.number()
-    .typeError('Must be a number')
-    .min(0)
-    .max(300)
-    .required('Systolic BP is required'),
-  bloodPressureDiastolic: Yup.number()
-    .typeError('Must be a number')
-    .min(0)
-    .max(200)
-    .required('Diastolic BP is required'),
-  pulseRate: Yup.number()
-    .typeError('Must be a number')
-    .min(0)
-    .max(300)
-    .required('Pulse rate is required'),
-  temperature: Yup.number()
-    .typeError('Must be a number')
-    .min(30, 'Temperature must be ≥ 30°C')
-    .max(45, 'Temperature must be ≤ 45°C')
-    .required('Temperature is required'),
-  weight: Yup.number()
-    .typeError('Must be a number')
-    .min(0)
-    .max(500)
-    .required('Weight is required'),
-  height: Yup.number()
-    .typeError('Must be a number')
-    .min(0)
-    .max(300)
-    .required('Height is required'),
-  oxygenSaturation: Yup.number()
-    .typeError('Must be a number')
-    .min(0)
-    .max(100)
-    .nullable()
-    .optional(),
-  bloodGlucose: Yup.number()
-    .typeError('Must be a number')
-    .min(0)
-    .nullable()
-    .optional(),
-  notes: Yup.string().optional(),
-});
+function getPatientAgeYears(dob?: string | null): number | null {
+  if (!dob) return null;
+  return Math.floor((Date.now() - new Date(dob).getTime()) / 31_557_600_000);
+}
+
+function makeSchema(isUnder5: boolean) {
+  const optionalNumeric = (min: number, max: number) =>
+    Yup.number().typeError('Must be a number').min(min).max(max).nullable().optional();
+
+  const requiredNumeric = (min: number, max: number, msg: string) =>
+    Yup.number().typeError('Must be a number').min(min).max(max).required(msg);
+
+  return Yup.object({
+    patientId: Yup.string().required('Patient is required'),
+    stationId: Yup.string().required('Station is required'),
+    bloodPressureSystolic: isUnder5
+      ? optionalNumeric(0, 300)
+      : requiredNumeric(0, 300, 'Systolic BP is required'),
+    bloodPressureDiastolic: isUnder5
+      ? optionalNumeric(0, 200)
+      : requiredNumeric(0, 200, 'Diastolic BP is required'),
+    pulseRate: isUnder5
+      ? optionalNumeric(0, 300)
+      : requiredNumeric(0, 300, 'Pulse rate is required'),
+    temperature: Yup.number()
+      .typeError('Must be a number')
+      .min(30, 'Temperature must be ≥ 30°C')
+      .max(45, 'Temperature must be ≤ 45°C')
+      .required('Temperature is required'),
+    weight: isUnder5
+      ? optionalNumeric(0, 500)
+      : requiredNumeric(0, 500, 'Weight is required'),
+    height: isUnder5
+      ? optionalNumeric(0, 300)
+      : requiredNumeric(0, 300, 'Height is required'),
+    oxygenSaturation: optionalNumeric(0, 100),
+    bloodGlucose: Yup.number().typeError('Must be a number').min(0).nullable().optional(),
+    notes: Yup.string().optional(),
+  });
+}
 
 const INPUT_CLS =
   'h-12 bg-white/50 dark:bg-black/50 border-border rounded-xl';
@@ -114,17 +113,30 @@ export function VitalSignModal({
   mode,
   initialData,
   onSubmit,
+  entry,
 }: VitalSignModalProps) {
   const dispatch = useAppDispatch();
+  const router = useRouter();
   const { list: patients, isLoadingPatients } = useAppSelector((s) => s.patients);
   const { list: stations, isLoadingStations } = useAppSelector((s) => s.stations);
+  const [moveStationId, setMoveStationId] = useState('');
+  const submitIntent = useRef<'save' | 'saveAndMove'>('save');
 
   const isViewOnly = mode === 'view';
-
   const isPatientLocked = !!initialData?.patient?.firstName;
+
+  const availableStations = entry
+    ? stations.filter((s) => (s as any).outreach?.id === entry.outreach.id && s.id !== entry.currentStation?.id)
+    : [];
+
+  const patientDob = entry?.patient.dateOfBirth;
+  const patientAge = getPatientAgeYears(patientDob);
+  const isUnder5 = patientAge !== null && patientAge < 5;
 
   useEffect(() => {
     if (!open) return;
+    setMoveStationId('');
+    submitIntent.current = 'save';
     if (!isPatientLocked) dispatch(fetchPatients({ limit: 200 }));
     dispatch(fetchStations({ limit: 100 }));
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -170,30 +182,34 @@ export function VitalSignModal({
 
         <Formik
           initialValues={initialValues}
-          validationSchema={schema}
+          validationSchema={makeSchema(isUnder5)}
           enableReinitialize
           onSubmit={async (values, { setSubmitting }) => {
             if (isViewOnly) return;
             try {
+              const toOptNum = (v: string) => (v !== '' ? Number(v) : undefined);
               const payload = {
                 patientId: values.patientId,
                 stationId: values.stationId,
-                bloodPressureSystolic: Number(values.bloodPressureSystolic),
-                bloodPressureDiastolic: Number(values.bloodPressureDiastolic),
-                pulseRate: Number(values.pulseRate),
+                bloodPressureSystolic: isUnder5 ? toOptNum(values.bloodPressureSystolic) : Number(values.bloodPressureSystolic),
+                bloodPressureDiastolic: isUnder5 ? toOptNum(values.bloodPressureDiastolic) : Number(values.bloodPressureDiastolic),
+                pulseRate: isUnder5 ? toOptNum(values.pulseRate) : Number(values.pulseRate),
                 temperature: Number(values.temperature),
-                weight: Number(values.weight),
-                height: Number(values.height),
-                oxygenSaturation: values.oxygenSaturation !== ''
-                  ? Number(values.oxygenSaturation)
-                  : undefined,
-                bloodGlucose: values.bloodGlucose !== ''
-                  ? Number(values.bloodGlucose)
-                  : undefined,
+                weight: isUnder5 ? toOptNum(values.weight) : Number(values.weight),
+                height: isUnder5 ? toOptNum(values.height) : Number(values.height),
+                oxygenSaturation: toOptNum(values.oxygenSaturation),
+                bloodGlucose: toOptNum(values.bloodGlucose),
                 notes: values.notes || undefined,
               };
               await onSubmit(payload);
-              onOpenChange(false);
+              if (submitIntent.current === 'saveAndMove' && entry && moveStationId) {
+                await dispatch(moveQueueEntry({ id: entry.id, data: { stationId: moveStationId } })).unwrap();
+                toast.success('Patient moved successfully');
+                onOpenChange(false);
+                router.push('/service-queue');
+              } else {
+                onOpenChange(false);
+              }
             } catch (err: any) {
               toast.error(err?.message || err || 'Failed to save vital signs');
             } finally {
@@ -201,8 +217,16 @@ export function VitalSignModal({
             }
           }}
         >
-          {({ values, setFieldValue, isSubmitting }) => (
+          {({ values, setFieldValue, isSubmitting, submitForm }) => (
             <Form className="space-y-2">
+
+              {/* ── Under-5 notice ────────────────────── */}
+              {isUnder5 && !isViewOnly && (
+                <div className="flex items-start gap-2 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 px-3 py-2.5 text-sm text-amber-800 dark:text-amber-300">
+                  <span className="shrink-0 mt-0.5">⚠️</span>
+                  <span>Patient is under 5 — Blood pressure, pulse, weight and height are <strong>optional</strong> for this age group.</span>
+                </div>
+              )}
 
               {/* ── Patient & Station ───────────────────── */}
               {sectionLabel('Patient & Station')}
@@ -269,6 +293,7 @@ export function VitalSignModal({
                 <div className="space-y-1.5">
                   <Label htmlFor="bloodPressureSystolic" className="text-sm font-semibold text-foreground/80">
                     Systolic <span className="font-normal text-muted-foreground">(mmHg)</span>
+                    {isUnder5 && <span className="ml-1 text-xs font-normal text-amber-600">optional</span>}
                   </Label>
                   <Field as={Input} id="bloodPressureSystolic" name="bloodPressureSystolic"
                     type="number" inputMode="numeric" disabled={isViewOnly} className={INPUT_CLS} />
@@ -277,6 +302,7 @@ export function VitalSignModal({
                 <div className="space-y-1.5">
                   <Label htmlFor="bloodPressureDiastolic" className="text-sm font-semibold text-foreground/80">
                     Diastolic <span className="font-normal text-muted-foreground">(mmHg)</span>
+                    {isUnder5 && <span className="ml-1 text-xs font-normal text-amber-600">optional</span>}
                   </Label>
                   <Field as={Input} id="bloodPressureDiastolic" name="bloodPressureDiastolic"
                     type="number" inputMode="numeric" disabled={isViewOnly} className={INPUT_CLS} />
@@ -285,6 +311,7 @@ export function VitalSignModal({
                 <div className="space-y-1.5">
                   <Label htmlFor="pulseRate" className="text-sm font-semibold text-foreground/80">
                     Pulse Rate <span className="font-normal text-muted-foreground">(bpm)</span>
+                    {isUnder5 && <span className="ml-1 text-xs font-normal text-amber-600">optional</span>}
                   </Label>
                   <Field as={Input} id="pulseRate" name="pulseRate"
                     type="number" inputMode="numeric" disabled={isViewOnly} className={INPUT_CLS} />
@@ -298,6 +325,7 @@ export function VitalSignModal({
                 <div className="space-y-1.5">
                   <Label htmlFor="weight" className="text-sm font-semibold text-foreground/80">
                     Weight <span className="font-normal text-muted-foreground">(kg)</span>
+                    {isUnder5 && <span className="ml-1 text-xs font-normal text-amber-600">optional</span>}
                   </Label>
                   <Field as={Input} id="weight" name="weight"
                     type="number" step="0.1" inputMode="decimal" disabled={isViewOnly} className={INPUT_CLS} />
@@ -306,6 +334,7 @@ export function VitalSignModal({
                 <div className="space-y-1.5">
                   <Label htmlFor="height" className="text-sm font-semibold text-foreground/80">
                     Height <span className="font-normal text-muted-foreground">(cm)</span>
+                    {isUnder5 && <span className="ml-1 text-xs font-normal text-amber-600">optional</span>}
                   </Label>
                   <Field as={Input} id="height" name="height"
                     type="number" step="0.1" inputMode="decimal" disabled={isViewOnly} className={INPUT_CLS} />
@@ -363,6 +392,16 @@ export function VitalSignModal({
                 />
               </div>
 
+              {/* ── Move to station (create/edit mode) ── */}
+              {!isViewOnly && entry && (
+                <StationMoveSection
+                  stations={availableStations}
+                  value={moveStationId}
+                  onChange={setMoveStationId}
+                  currentStationId={entry.currentStation?.id}
+                />
+              )}
+
               {/* ── Actions ───────────────────────────── */}
               <div className="pt-4 grid grid-cols-1 sm:flex gap-3 sm:justify-end border-t border-border/50 mt-4">
                 <Button
@@ -374,13 +413,29 @@ export function VitalSignModal({
                   {isViewOnly ? 'Close' : 'Cancel'}
                 </Button>
                 {!isViewOnly && (
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="h-12 w-full sm:w-auto px-8 rounded-xl shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all"
-                  >
-                    {isSubmitting ? 'Saving...' : 'Save Vital Signs'}
-                  </Button>
+                  <>
+                    <Button
+                      type="button"
+                      disabled={isSubmitting}
+                      variant="outline"
+                      onClick={() => { submitIntent.current = 'save'; submitForm(); }}
+                      className="h-12 w-full sm:w-auto px-8 rounded-xl"
+                    >
+                      {isSubmitting && submitIntent.current === 'save' ? 'Saving...' : 'Save Vital Signs'}
+                    </Button>
+                    <Button
+                      type="button"
+                      disabled={isSubmitting}
+                      onClick={() => {
+                        if (!moveStationId) { toast.error('Select a destination station first'); return; }
+                        submitIntent.current = 'saveAndMove';
+                        submitForm();
+                      }}
+                      className="h-12 w-full sm:w-auto px-8 rounded-xl shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all"
+                    >
+                      {isSubmitting && submitIntent.current === 'saveAndMove' ? 'Saving...' : 'Save & Move →'}
+                    </Button>
+                  </>
                 )}
               </div>
             </Form>
