@@ -46,7 +46,7 @@ function getPatientAgeYears(dob?: string | null): number | null {
   return Math.floor((Date.now() - new Date(dob).getTime()) / 31_557_600_000);
 }
 
-function makeSchema(isUnder5: boolean) {
+function makeSchema(isUnderFifteen: boolean) {
   const optionalNumeric = (min: number, max: number) =>
     Yup.number().typeError('Must be a number').min(min).max(max).nullable().optional();
 
@@ -56,13 +56,13 @@ function makeSchema(isUnder5: boolean) {
   return Yup.object({
     patientId: Yup.string().required('Patient is required'),
     stationId: Yup.string().required('Station is required'),
-    bloodPressureSystolic: isUnder5
+    bloodPressureSystolic: isUnderFifteen
       ? optionalNumeric(0, 300)
       : requiredNumeric(0, 300, 'Systolic BP is required'),
-    bloodPressureDiastolic: isUnder5
+    bloodPressureDiastolic: isUnderFifteen
       ? optionalNumeric(0, 200)
       : requiredNumeric(0, 200, 'Diastolic BP is required'),
-    pulseRate: isUnder5
+    pulseRate: isUnderFifteen
       ? optionalNumeric(0, 300)
       : requiredNumeric(0, 300, 'Pulse rate is required'),
     temperature: Yup.number()
@@ -70,10 +70,10 @@ function makeSchema(isUnder5: boolean) {
       .min(30, 'Temperature must be ≥ 30°C')
       .max(45, 'Temperature must be ≤ 45°C')
       .required('Temperature is required'),
-    weight: isUnder5
+    weight: isUnderFifteen
       ? optionalNumeric(0, 500)
       : requiredNumeric(0, 500, 'Weight is required'),
-    height: isUnder5
+    height: isUnderFifteen
       ? optionalNumeric(0, 300)
       : requiredNumeric(0, 300, 'Height is required'),
     oxygenSaturation: optionalNumeric(0, 100),
@@ -131,7 +131,7 @@ export function VitalSignModal({
 
   const patientDob = entry?.patient.dateOfBirth;
   const patientAge = getPatientAgeYears(patientDob);
-  const isUnder5 = patientAge !== null && patientAge < 5;
+  const isUnderFifteen = patientAge !== null && patientAge < 15;
 
   useEffect(() => {
     if (!open) return;
@@ -182,7 +182,7 @@ export function VitalSignModal({
 
         <Formik
           initialValues={initialValues}
-          validationSchema={makeSchema(isUnder5)}
+          validationSchema={makeSchema(isUnderFifteen)}
           enableReinitialize
           onSubmit={async (values, { setSubmitting }) => {
             if (isViewOnly) return;
@@ -191,12 +191,12 @@ export function VitalSignModal({
               const payload = {
                 patientId: values.patientId,
                 stationId: values.stationId,
-                bloodPressureSystolic: isUnder5 ? toOptNum(values.bloodPressureSystolic) : Number(values.bloodPressureSystolic),
-                bloodPressureDiastolic: isUnder5 ? toOptNum(values.bloodPressureDiastolic) : Number(values.bloodPressureDiastolic),
-                pulseRate: isUnder5 ? toOptNum(values.pulseRate) : Number(values.pulseRate),
+                bloodPressureSystolic: isUnderFifteen ? toOptNum(values.bloodPressureSystolic) : Number(values.bloodPressureSystolic),
+                bloodPressureDiastolic: isUnderFifteen ? toOptNum(values.bloodPressureDiastolic) : Number(values.bloodPressureDiastolic),
+                pulseRate: isUnderFifteen ? toOptNum(values.pulseRate) : Number(values.pulseRate),
                 temperature: Number(values.temperature),
-                weight: isUnder5 ? toOptNum(values.weight) : Number(values.weight),
-                height: isUnder5 ? toOptNum(values.height) : Number(values.height),
+                weight: isUnderFifteen ? toOptNum(values.weight) : Number(values.weight),
+                height: isUnderFifteen ? toOptNum(values.height) : Number(values.height),
                 oxygenSaturation: toOptNum(values.oxygenSaturation),
                 bloodGlucose: toOptNum(values.bloodGlucose),
                 notes: values.notes || undefined,
@@ -221,10 +221,10 @@ export function VitalSignModal({
             <Form className="space-y-2">
 
               {/* ── Under-5 notice ────────────────────── */}
-              {isUnder5 && !isViewOnly && (
+              {isUnderFifteen && !isViewOnly && (
                 <div className="flex items-start gap-2 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 px-3 py-2.5 text-sm text-amber-800 dark:text-amber-300">
                   <span className="shrink-0 mt-0.5">⚠️</span>
-                  <span>Patient is under 5 — Blood pressure, pulse, weight and height are <strong>optional</strong> for this age group.</span>
+                  <span>Patient is under 15 — Blood pressure, pulse, weight and height are <strong>optional</strong> for this age group.</span>
                 </div>
               )}
 
@@ -293,7 +293,7 @@ export function VitalSignModal({
                 <div className="space-y-1.5">
                   <Label htmlFor="bloodPressureSystolic" className="text-sm font-semibold text-foreground/80">
                     Systolic <span className="font-normal text-muted-foreground">(mmHg)</span>
-                    {isUnder5 && <span className="ml-1 text-xs font-normal text-amber-600">optional</span>}
+                    {isUnderFifteen && <span className="ml-1 text-xs font-normal text-amber-600">optional</span>}
                   </Label>
                   <Field as={Input} id="bloodPressureSystolic" name="bloodPressureSystolic"
                     type="number" inputMode="numeric" disabled={isViewOnly} className={INPUT_CLS} />
@@ -302,7 +302,7 @@ export function VitalSignModal({
                 <div className="space-y-1.5">
                   <Label htmlFor="bloodPressureDiastolic" className="text-sm font-semibold text-foreground/80">
                     Diastolic <span className="font-normal text-muted-foreground">(mmHg)</span>
-                    {isUnder5 && <span className="ml-1 text-xs font-normal text-amber-600">optional</span>}
+                    {isUnderFifteen && <span className="ml-1 text-xs font-normal text-amber-600">optional</span>}
                   </Label>
                   <Field as={Input} id="bloodPressureDiastolic" name="bloodPressureDiastolic"
                     type="number" inputMode="numeric" disabled={isViewOnly} className={INPUT_CLS} />
@@ -311,7 +311,7 @@ export function VitalSignModal({
                 <div className="space-y-1.5">
                   <Label htmlFor="pulseRate" className="text-sm font-semibold text-foreground/80">
                     Pulse Rate <span className="font-normal text-muted-foreground">(bpm)</span>
-                    {isUnder5 && <span className="ml-1 text-xs font-normal text-amber-600">optional</span>}
+                    {isUnderFifteen && <span className="ml-1 text-xs font-normal text-amber-600">optional</span>}
                   </Label>
                   <Field as={Input} id="pulseRate" name="pulseRate"
                     type="number" inputMode="numeric" disabled={isViewOnly} className={INPUT_CLS} />
@@ -325,7 +325,7 @@ export function VitalSignModal({
                 <div className="space-y-1.5">
                   <Label htmlFor="weight" className="text-sm font-semibold text-foreground/80">
                     Weight <span className="font-normal text-muted-foreground">(kg)</span>
-                    {isUnder5 && <span className="ml-1 text-xs font-normal text-amber-600">optional</span>}
+                    {isUnderFifteen && <span className="ml-1 text-xs font-normal text-amber-600">optional</span>}
                   </Label>
                   <Field as={Input} id="weight" name="weight"
                     type="number" step="0.1" inputMode="decimal" disabled={isViewOnly} className={INPUT_CLS} />
@@ -334,7 +334,7 @@ export function VitalSignModal({
                 <div className="space-y-1.5">
                   <Label htmlFor="height" className="text-sm font-semibold text-foreground/80">
                     Height <span className="font-normal text-muted-foreground">(cm)</span>
-                    {isUnder5 && <span className="ml-1 text-xs font-normal text-amber-600">optional</span>}
+                    {isUnderFifteen && <span className="ml-1 text-xs font-normal text-amber-600">optional</span>}
                   </Label>
                   <Field as={Input} id="height" name="height"
                     type="number" step="0.1" inputMode="decimal" disabled={isViewOnly} className={INPUT_CLS} />
