@@ -155,7 +155,6 @@ export default function PatientsScreen() {
       }
       loadData();
     } catch (err: any) {
-      toast.error(err || `Failed to ${modalMode} patient`);
       throw err;
     }
   };

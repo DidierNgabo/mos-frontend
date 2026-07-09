@@ -150,7 +150,7 @@ export function PatientModal({
           initialValues={initialValues}
           validationSchema={schema}
           enableReinitialize
-          onSubmit={async (values, { setSubmitting, resetForm }) => {
+          onSubmit={async (values, { setSubmitting, resetForm, setStatus }) => {
             if (isViewOnly) return;
             try {
               const digits = (values.phoneNumber || '').replace(/\D/g, '');
@@ -178,12 +178,14 @@ export function PatientModal({
               } else {
                 onOpenChange(false);
               }
+            } catch (err: any) {
+              setStatus(typeof err === 'string' ? err : 'Something went wrong. Please try again.');
             } finally {
               setSubmitting(false);
             }
           }}
         >
-          {({ values, setFieldValue, isSubmitting }) => {
+          {({ values, setFieldValue, isSubmitting, status }) => {
             // Retrieve cascading location arrays based on current form values
             const availableProvinces = getProvinces() || [];
             // console.log('*****Available Provinces:', availableProvinces);
@@ -224,6 +226,12 @@ export function PatientModal({
 
             return (
               <Form className="space-y-4">
+                {status && (
+                  <div className="flex items-start gap-2 rounded-xl bg-destructive/10 border border-destructive/30 px-3 py-2.5 text-sm text-destructive">
+                    <span className="shrink-0 mt-0.5">⚠</span>
+                    <span>{status}</span>
+                  </div>
+                )}
                 {/* ── Outreach ─────────────────────────────── */}
                 <div className="space-y-1.5">
                   <Label className="text-sm font-semibold text-foreground/80">

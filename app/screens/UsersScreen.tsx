@@ -123,7 +123,6 @@ export default function UsersScreen() {
       }
       loadData();
     } catch (err: any) {
-      toast.error(err || `Failed to ${modalMode} user`);
       throw err;
     }
   };

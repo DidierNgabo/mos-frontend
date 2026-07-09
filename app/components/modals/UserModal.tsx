@@ -27,6 +27,7 @@ const schema = Yup.object({
   firstName: Yup.string().required('First name is required'),
   lastName: Yup.string().required('Last name is required'),
   email: Yup.string().email('Enter a valid email').required('Email is required'),
+  phone: Yup.string().optional(),
   roleIds: Yup.array().of(Yup.string()).min(1, 'At least one role is required'),
   isActive: Yup.boolean(),
 });
@@ -55,6 +56,7 @@ export function UserModal({
     firstName: initialData?.firstName || '',
     lastName: initialData?.lastName || '',
     email: initialData?.email || '',
+    phone: initialData?.phone || '',
     roleIds: initialData?.roles?.map((r: any) => r.id || r) || [],
     isActive: initialData?.isActive ?? true,
   };
@@ -79,18 +81,26 @@ export function UserModal({
           initialValues={initialValues}
           validationSchema={schema}
           enableReinitialize
-          onSubmit={async (values, { setSubmitting }) => {
+          onSubmit={async (values, { setSubmitting, setStatus }) => {
             if (isViewOnly) return;
             try {
               await onSubmit(values);
               onOpenChange(false);
+            } catch (err: any) {
+              setStatus(typeof err === 'string' ? err : 'Something went wrong. Please try again.');
             } finally {
               setSubmitting(false);
             }
           }}
         >
-          {({ errors, touched, values, setFieldValue, isSubmitting }) => (
+          {({ values, setFieldValue, isSubmitting, status }) => (
             <Form className="space-y-5">
+              {status && (
+                <div className="flex items-start gap-2 rounded-xl bg-destructive/10 border border-destructive/30 px-3 py-2.5 text-sm text-destructive">
+                  <span className="shrink-0 mt-0.5">⚠</span>
+                  <span>{status}</span>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="firstName" className="text-sm font-semibold text-foreground/80">First Name</Label>
@@ -123,10 +133,26 @@ export function UserModal({
                   id="email"
                   name="email"
                   type="email"
-                  disabled={isViewOnly || mode === 'edit'} // Usually email is not easily editable, or disable if preferred
+                  disabled={isViewOnly || mode === 'edit'}
                   className="h-12 bg-white/50 dark:bg-black/50 border-border focus-visible:ring-primary/50 transition-all rounded-xl disabled:opacity-50"
                 />
                 <ErrorMessage name="email" component="p" className="text-xs text-destructive font-medium" />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-sm font-semibold text-foreground/80">
+                  Phone <span className="font-normal text-muted-foreground">(optional)</span>
+                </Label>
+                <Field
+                  as={Input}
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  placeholder="+250 7XX XXX XXX"
+                  disabled={isViewOnly}
+                  className="h-12 bg-white/50 dark:bg-black/50 border-border focus-visible:ring-primary/50 transition-all rounded-xl"
+                />
+                <ErrorMessage name="phone" component="p" className="text-xs text-destructive font-medium" />
               </div>
 
               <div className="space-y-3">
