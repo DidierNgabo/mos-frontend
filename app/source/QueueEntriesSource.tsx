@@ -23,3 +23,6 @@ export const fetchPatientChartRequest = (id: string) =>
 
 export const deleteQueueEntryRequest = (id: string) =>
   processRequest({ method: 'DELETE', url: `queue-entries/${id}` });
+
+export const fetchPublicQueueRequest = (params?: Record<string, unknown>) =>
+  processRequest({ method: 'GET', url: 'queue-entries/public', params, showErrorToaster: false });

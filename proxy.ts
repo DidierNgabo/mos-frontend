@@ -9,7 +9,8 @@ export function proxy(req: NextRequest) {
     pathname.startsWith('/change-password') ||
     pathname.startsWith('/forgot-password') ||
     pathname.startsWith('/reset-password') ||
-    pathname.startsWith('/select-outreach');
+    pathname.startsWith('/select-outreach') ||
+    pathname.startsWith('/queue-display');
 
   if (!token && !isAuthPage) {
     return NextResponse.redirect(new URL('/login', req.url));

@@ -11,3 +11,6 @@ export const dispensePrescriptionRequest = (id: string) =>
 
 export const cancelPrescriptionRequest = (id: string) =>
   processRequest({ method: 'PATCH', url: `prescriptions/${id}/cancel`, data: {} });
+
+export const deletePrescriptionRequest = (id: string) =>
+  processRequest({ method: 'DELETE', url: `prescriptions/${id}` });

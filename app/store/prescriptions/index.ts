@@ -33,6 +33,14 @@ export const cancelPrescription = createAsyncThunk(
   },
 );
 
+export const deletePrescription = createAsyncThunk(
+  'prescriptions/delete',
+  async (id: string, { rejectWithValue }) => {
+    try { await PrescriptionsSource.deletePrescriptionRequest(id); return id; }
+    catch (e: any) { return rejectWithValue(e?.message || 'Failed to remove prescription'); }
+  },
+);
+
 const slice = createSlice({
   name: 'prescriptions',
   initialState: { list: [] as any[], totalNumItems: 0, isLoading: false, error: null as string | null },
@@ -43,7 +51,10 @@ const slice = createSlice({
      .addCase(fetchPrescriptions.rejected, (s, a) => { s.isLoading = false; s.error = (a.payload as string) ?? null; })
      .addCase(createPrescription.fulfilled, (s) => { s.isLoading = false; })
      .addCase(dispensePrescription.fulfilled, (s) => { s.isLoading = false; })
-     .addCase(cancelPrescription.fulfilled, (s) => { s.isLoading = false; });
+     .addCase(cancelPrescription.fulfilled, (s) => { s.isLoading = false; })
+     .addCase(deletePrescription.fulfilled, (s, { payload }) => {
+       s.list = s.list.filter((rx) => rx.id !== payload);
+     });
   },
 });
 

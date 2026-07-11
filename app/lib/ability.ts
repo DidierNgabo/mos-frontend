@@ -53,11 +53,10 @@ export function buildAbilityFor(roles: string[]): Ability {
     }
 
     if (has('PSYCHOLOGIST')) {
-      grant('read', ['Outreach', 'Station', 'Team', 'QueueEntry']);
-      grant(
-        ['create', 'read', 'update', 'delete'],
-        ['PHQ9Screening', 'GAD7Screening', 'PCL5Screening'],
-      );
+      grant('read', ['Outreach', 'Station', 'Team', 'Patient', 'User']);
+      grant(['read', 'update'], 'QueueEntry');
+      grant(['create', 'read', 'update', 'delete'], ['PHQ9Screening', 'GAD7Screening', 'PCL5Screening']);
+      grant(['create', 'read', 'update'], ['Prescription', 'Transfer']);
     }
 
     if (has('PHARMACIST')) {

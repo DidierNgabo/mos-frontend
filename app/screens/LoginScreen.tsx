@@ -242,6 +242,11 @@ export default function LoginScreen() {
           <p className="text-center text-sm text-muted-foreground font-medium">
             Contact your administrator if you don&apos;t have an account.
           </p>
+          <p className="text-center text-sm">
+            <Link href="/queue-display" className="text-primary hover:underline font-medium">
+              View live service queue →
+            </Link>
+          </p>
         </div>
       </div>
     </div>

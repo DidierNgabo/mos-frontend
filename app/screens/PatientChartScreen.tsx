@@ -20,7 +20,17 @@ import {
   RefreshCw,
   Pill,
   MessageSquareText,
+  Trash2,
+  ChevronDown,
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/app/components/ui/dropdown-menu';
 import { useAppDispatch, useAppSelector } from '@/app/hooks/redux';
 import {
   fetchPatientChart,
@@ -39,7 +49,8 @@ import { TransferModal } from '@/app/components/modals/TransferModal';
 import { MovePatientModal } from '@/app/components/modals/MovePatientModal';
 import { PrescriptionModal } from '@/app/components/modals/PrescriptionModal';
 import { DispenseConfirmModal } from '@/app/components/modals/DispenseConfirmModal';
-import { dispensePrescription } from '@/app/store/prescriptions';
+import { DeletePrescriptionModal } from '@/app/components/modals/DeletePrescriptionModal';
+import { dispensePrescription, deletePrescription } from '@/app/store/prescriptions';
 import { fetchPHQ9Screenings } from '@/app/store/phq9-screenings';
 import { fetchGAD7Screenings } from '@/app/store/gad7-screenings';
 import { fetchPCL5Screenings } from '@/app/store/pcl5-screenings';
@@ -252,6 +263,8 @@ export default function PatientChartScreen({ entryId }: Props) {
   const [rxModal, setRxModal] = useState(false);
 
   const [dispenseTarget, setDispenseTarget] =
+    useState<PrescriptionRecord | null>(null);
+  const [deleteTarget, setDeleteTarget] =
     useState<PrescriptionRecord | null>(null);
   const [editingVital, setEditingVital] = useState<VitalSignRecord | null>(
     null,
@@ -531,6 +544,44 @@ export default function PatientChartScreen({ entryId }: Props) {
                 </Button>
               </Can>
             )}
+            <Can do="manage" on="QueueEntry">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="rounded-xl gap-1.5 h-11 sm:h-9"
+                  >
+                    Override Status <ChevronDown className="h-3.5 w-3.5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-44">
+                  <DropdownMenuLabel className="text-xs text-muted-foreground">
+                    Set queue status
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {([
+                    { status: 'WAITING',    label: 'Waiting',    color: 'text-amber-600' },
+                    { status: 'IN_SERVICE', label: 'In Service', color: 'text-blue-600' },
+                    { status: 'COMPLETED',  label: 'Completed',  color: 'text-green-600' },
+                    { status: 'NO_SHOW',    label: 'No Show',    color: 'text-slate-500' },
+                  ] as const).map(({ status, label, color }) => (
+                    <DropdownMenuItem
+                      key={status}
+                      disabled={entry.status === status}
+                      className={entry.status === status ? 'opacity-50 cursor-default' : ''}
+                      onClick={() => entry.status !== status && handleStatus(status)}
+                    >
+                      <span className={`mr-2 ${color} font-medium`}>●</span>
+                      {label}
+                      {entry.status === status && (
+                        <span className="ml-auto text-xs text-muted-foreground">current</span>
+                      )}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </Can>
           </div>
         </div>
       </div>
@@ -1248,15 +1299,27 @@ export default function PatientChartScreen({ entryId }: Props) {
                 </MobileField>
               </div>
               {rx.status === 'PENDING' && (
-                <Can do="update" on="Prescription">
-                  <Button
-                    type="button"
-                    className="mt-4 h-11 w-full rounded-xl gap-2"
-                    onClick={() => setDispenseTarget(rx)}
-                  >
-                    <Pill className="h-4 w-4" /> Dispense medication
-                  </Button>
-                </Can>
+                <div className="mt-4 flex flex-col gap-2">
+                  <Can do="update" on="Prescription">
+                    <Button
+                      type="button"
+                      className="h-11 w-full rounded-xl gap-2"
+                      onClick={() => setDispenseTarget(rx)}
+                    >
+                      <Pill className="h-4 w-4" /> Dispense medication
+                    </Button>
+                  </Can>
+                  <Can do="delete" on="Prescription">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-11 w-full rounded-xl gap-2 text-destructive border-destructive/30 hover:bg-destructive/10"
+                      onClick={() => setDeleteTarget(rx)}
+                    >
+                      <Trash2 className="h-4 w-4" /> Remove prescription
+                    </Button>
+                  </Can>
+                </div>
               )}
             </MobileRecordCard>
           ))}
@@ -1289,6 +1352,7 @@ export default function PatientChartScreen({ entryId }: Props) {
                 key={rx.id}
                 rx={rx}
                 onDispenseClick={(r) => setDispenseTarget(r)}
+                onDeleteClick={(r) => setDeleteTarget(r)}
               />
             ))}
           </tbody>
@@ -1503,6 +1567,19 @@ export default function PatientChartScreen({ entryId }: Props) {
           load();
         }}
       />
+      <DeletePrescriptionModal
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+        rx={deleteTarget}
+        onConfirm={async () => {
+          await dispatch(deletePrescription(deleteTarget!.id)).unwrap();
+          toast.success('Prescription removed');
+          setDeleteTarget(null);
+          load();
+        }}
+      />
       <MentalHealthScreeningModal
         open={mhModal}
         onOpenChange={(open) => {
@@ -1524,9 +1601,11 @@ export default function PatientChartScreen({ entryId }: Props) {
 function PrescriptionRow({
   rx,
   onDispenseClick,
+  onDeleteClick,
 }: {
   rx: PrescriptionRecord;
   onDispenseClick: (rx: PrescriptionRecord) => void;
+  onDeleteClick: (rx: PrescriptionRecord) => void;
 }) {
   return (
     <tr className="border-t border-border/40 hover:bg-muted/20">
@@ -1559,16 +1638,28 @@ function PrescriptionRow({
       </td>
       <td className="px-4 py-2.5">
         {rx.status === 'PENDING' && (
-          <Can do="update" on="Prescription">
-            <Button
-              size="sm"
-              variant="outline"
-              className="rounded-lg h-7 gap-1 text-xs"
-              onClick={() => onDispenseClick(rx)}
-            >
-              <Pill className="h-3 w-3" /> Dispense
-            </Button>
-          </Can>
+          <div className="flex items-center gap-2">
+            <Can do="update" on="Prescription">
+              <Button
+                size="sm"
+                variant="outline"
+                className="rounded-lg h-7 gap-1 text-xs"
+                onClick={() => onDispenseClick(rx)}
+              >
+                <Pill className="h-3 w-3" /> Dispense
+              </Button>
+            </Can>
+            <Can do="delete" on="Prescription">
+              <Button
+                size="sm"
+                variant="outline"
+                className="rounded-lg h-7 gap-1 text-xs text-destructive border-destructive/30 hover:bg-destructive/10"
+                onClick={() => onDeleteClick(rx)}
+              >
+                <Trash2 className="h-3 w-3" /> Remove
+              </Button>
+            </Can>
+          </div>
         )}
       </td>
     </tr>

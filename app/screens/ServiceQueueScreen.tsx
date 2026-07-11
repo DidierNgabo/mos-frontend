@@ -60,6 +60,8 @@ export default function ServiceQueueScreen() {
       ['NURSE', 'DOCTOR', 'PSYCHOLOGIST'].includes(r),
     ) ?? false;
 
+  const limit = 20;
+  const [offset, setOffset] = useState(0);
   const [stationFilter, setStationFilter] = useState<string | undefined>(undefined);
   const [statusFilter, setStatusFilter] = useState<string>('active');
   const [searchTerm, setSearchTerm] = useState('');
@@ -74,13 +76,13 @@ export default function ServiceQueueScreen() {
   const [transferModal, setTransferModal] = useState<{ open: boolean; entry: QueueEntry | null }>({ open: false, entry: null });
 
   const loadQueue = useCallback(() => {
-    const params: Record<string, unknown> = { limit: 50, offset: 0 };
+    const params: Record<string, unknown> = { limit, offset };
     if (!isClinical && stationFilter && stationFilter !== 'unassigned') params.currentStationId = stationFilter;
     if (activeOutreachId) params.outreachId = activeOutreachId;
     if (statusFilter !== 'active' && statusFilter !== 'all') params.status = statusFilter;
     if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
     dispatch(fetchMyQueue(params));
-  }, [dispatch, isClinical, stationFilter, activeOutreachId, statusFilter, debouncedSearch]);
+  }, [dispatch, isClinical, stationFilter, activeOutreachId, statusFilter, debouncedSearch, limit, offset]);
 
   useEffect(() => {
     dispatch(fetchStations({ limit: 100, outreachId: activeOutreachId || undefined }));
@@ -96,7 +98,7 @@ export default function ServiceQueueScreen() {
     try {
       await dispatch(updateQueueStatus({ id: entry.id, data: { status: 'IN_SERVICE' } })).unwrap();
       toast.success('Patient status updated to In Service');
-      loadQueue();
+      router.push(`/service-queue/${entry.id}`);
     } catch {
       toast.error('Failed to update status');
     }
@@ -173,7 +175,7 @@ export default function ServiceQueueScreen() {
         {[
           { label: 'Waiting', value: waitingCount, color: 'text-amber-600', bg: 'bg-amber-500/10' },
           { label: 'In Service', value: inServiceCount, color: 'text-blue-600', bg: 'bg-blue-500/10' },
-          { label: 'Total fetched', value: totalNumItems, color: 'text-slate-600', bg: 'bg-slate-100' },
+          { label: 'Total in Queue', value: totalNumItems, color: 'text-slate-600', bg: 'bg-slate-100' },
         ].map(({ label, value, color, bg }) => (
           <div key={label} className={`${bg} rounded-2xl p-4 flex flex-col gap-1`}>
             <span className="text-xs text-muted-foreground font-medium">{label}</span>
@@ -189,7 +191,7 @@ export default function ServiceQueueScreen() {
           <Input
             type="search"
             value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
+            onChange={(event) => { setSearchTerm(event.target.value); setOffset(0); }}
             placeholder="Search patient name or ID..."
             aria-label="Search queue by patient name or registration number"
             className="h-10 rounded-xl bg-white/50 dark:bg-black/50 border-border pl-9 pr-9"
@@ -197,7 +199,7 @@ export default function ServiceQueueScreen() {
           {searchTerm && (
             <button
               type="button"
-              onClick={() => setSearchTerm('')}
+              onClick={() => { setSearchTerm(''); setOffset(0); }}
               aria-label="Clear patient search"
               className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
             >
@@ -207,7 +209,7 @@ export default function ServiceQueueScreen() {
         </div>
         {!isClinical && (
           <div className="w-full sm:max-w-55">
-            <Select value={stationFilter ?? 'all'} onValueChange={(v) => setStationFilter(v === 'all' ? undefined : v)}>
+            <Select value={stationFilter ?? 'all'} onValueChange={(v) => { setStationFilter(v === 'all' ? undefined : v); setOffset(0); }}>
               <SelectTrigger className="h-10 rounded-xl bg-white/50 dark:bg-black/50 border-border">
                 <SelectValue placeholder="All Stations" />
               </SelectTrigger>
@@ -222,7 +224,7 @@ export default function ServiceQueueScreen() {
           </div>
         )}
         <div className="w-full sm:max-w-45">
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setOffset(0); }}>
             <SelectTrigger className="h-10 rounded-xl bg-white/50 dark:bg-black/50 border-border">
               <SelectValue />
             </SelectTrigger>
@@ -349,6 +351,40 @@ export default function ServiceQueueScreen() {
           );
         })}
       </div>
+
+      {/* Pagination */}
+      {totalNumItems > limit && (
+        <div className="flex items-center justify-between px-2 py-3 border-t border-border/50">
+          <p className="text-sm text-muted-foreground">
+            Showing{' '}
+            <span className="font-medium text-foreground">{offset + 1}</span>{' '}
+            to{' '}
+            <span className="font-medium text-foreground">{Math.min(offset + limit, totalNumItems)}</span>{' '}
+            of{' '}
+            <span className="font-medium text-foreground">{totalNumItems}</span>
+          </p>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-lg h-9"
+              onClick={() => setOffset(Math.max(0, offset - limit))}
+              disabled={offset === 0 || isLoadingQueue}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-lg h-9"
+              onClick={() => setOffset(offset + limit)}
+              disabled={offset + limit >= totalNumItems || isLoadingQueue}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Modals */}
       <QueueEntryModal

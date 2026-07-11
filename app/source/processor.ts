@@ -103,6 +103,7 @@ export const processRequest = async ({
         if (typeof window !== 'undefined') {
           const currentPath = window.location.pathname;
           const authPages = [
+            '/login',
             '/auth/login',
             '/account-verification',
             '/create-password',
@@ -110,6 +111,7 @@ export const processRequest = async ({
             '/forgot-password',
             '/invitation',
             '/temporary-password',
+            '/queue-display',
           ];
           const isAuthPage =
             authPages.includes(currentPath) ||
@@ -118,7 +120,7 @@ export const processRequest = async ({
 
           if (!isAuthPage) {
             clearTokens();
-            window.location.href = '/auth/login';
+            window.location.href = '/login';
             throw error;
           }
 
