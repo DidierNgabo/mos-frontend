@@ -216,7 +216,7 @@ export function StatisticsChatDrawer() {
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      {/* <SheetTrigger asChild>
+      <SheetTrigger asChild>
         <Button
           className="rounded-full gap-2 shadow-sm"
           disabled={!activeOutreach}
@@ -224,7 +224,7 @@ export function StatisticsChatDrawer() {
           <Sparkles className="h-4 w-4" />
           <span className="hidden sm:inline">Ask MOS-AI</span>
         </Button>
-      </SheetTrigger> */}
+      </SheetTrigger>
       <SheetContent className="w-full sm:max-w-xl gap-0 p-0">
         <SheetHeader className="border-b px-5 py-4 pr-14">
           <SheetTitle className="flex items-center gap-2 text-lg">

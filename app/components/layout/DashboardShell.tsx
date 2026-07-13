@@ -34,6 +34,7 @@ import {
   FileText,
   HeartHandshake,
   Brain,
+  ClipboardList,
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/app/components/ui/button';
@@ -106,6 +107,12 @@ const navItems: {
     label: 'Mental Health',
     icon: Brain,
     allowedRoles: ['SUPER_ADMIN', 'OUTREACH_ADMIN', 'PSYCHOLOGIST'],
+  },
+  {
+    href: '/my-observations',
+    label: 'My Observations',
+    icon: ClipboardList,
+    allowedRoles: ['DOCTOR', 'NURSE', 'PSYCHOLOGIST', 'SUPER_ADMIN', 'OUTREACH_ADMIN'],
   },
   {
     href: '/pharmacy',

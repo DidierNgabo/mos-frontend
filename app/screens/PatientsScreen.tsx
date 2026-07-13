@@ -10,7 +10,9 @@ import {
   Trash,
   Eye,
   ListPlus,
+  ClipboardList,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/app/hooks/redux';
 import {
   fetchPatients,
@@ -53,6 +55,7 @@ import { Can } from '@/app/components/auth/Can';
 import { toast } from 'sonner';
 
 export default function PatientsScreen() {
+  const router = useRouter();
   const dispatch = useAppDispatch();
   const {
     list: patients,
@@ -324,6 +327,13 @@ export default function PatientsScreen() {
                         >
                           <Eye className="mr-2 h-4 w-4 text-muted-foreground" />{' '}
                           View
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="cursor-pointer"
+                          onClick={() => router.push(`/patients/${patient.id}/history`)}
+                        >
+                          <ClipboardList className="mr-2 h-4 w-4 text-muted-foreground" />{' '}
+                          Medical History
                         </DropdownMenuItem>
                         <Can do="update" on="Patient">
                           <DropdownMenuItem

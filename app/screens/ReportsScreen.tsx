@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   FileText,
   Activity,
@@ -14,12 +14,22 @@ import {
   Download,
   Loader2,
   X,
+  Users,
+  Building2,
 } from 'lucide-react';
 import { useAppSelector } from '@/app/hooks/redux';
-import { downloadReportRequest } from '@/app/source/StatsSource';
+import { downloadReportRequest, downloadStationReportRequest } from '@/app/source/StatsSource';
+import { fetchStationsRequest } from '@/app/source/StationsSource';
 import { Button } from '@/app/components/ui/button';
 import { Badge } from '@/app/components/ui/badge';
 import { Input } from '@/app/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/app/components/ui/select';
 import { toast } from 'sonner';
 
 interface ReportDef {
@@ -121,6 +131,26 @@ const REPORTS: ReportDef[] = [
     icon: Globe,
     color: 'from-indigo-500/10 to-indigo-600/5',
     iconBg: 'bg-indigo-500/10 text-indigo-600',
+    formats: ['pdf'],
+    requiresOutreach: true,
+  },
+  {
+    type: 'screenings',
+    title: 'Screenings Export',
+    description: 'Row-level export of all PHQ-9, GAD-7, and PCL-5 screenings — patient name, score, and severity per record.',
+    icon: Brain,
+    color: 'from-violet-500/10 to-violet-600/5',
+    iconBg: 'bg-violet-500/10 text-violet-600',
+    formats: ['pdf', 'csv'],
+    requiresOutreach: true,
+  },
+  {
+    type: 'outreach-users',
+    title: 'Outreach Staff Report',
+    description: 'All staff assigned to this outreach with their role, station, and activity counts (patients registered, observations, labs, dispensations).',
+    icon: Users,
+    color: 'from-teal-500/10 to-teal-600/5',
+    iconBg: 'bg-teal-500/10 text-teal-600',
     formats: ['pdf'],
     requiresOutreach: true,
   },
@@ -228,6 +258,123 @@ function ReportCard({
   );
 }
 
+function StationReportCard({
+  outreachId,
+  startDate,
+  endDate,
+}: {
+  outreachId: string | null;
+  startDate?: string;
+  endDate?: string;
+}) {
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  const [stations, setStations] = useState<any[]>([]);
+  const [stationId, setStationId] = useState('');
+  const [downloading, setDownloading] = useState<'pdf' | 'csv' | null>(null);
+
+  useEffect(() => {
+    if (!outreachId) {
+      setStations([]);
+      setStationId('');
+      return;
+    }
+    fetchStationsRequest({ outreachId, limit: 100 })
+      .then((res: any) => setStations(res?.items ?? []))
+      .catch(() => {});
+  }, [outreachId]);
+
+  const handleDownload = async (format: 'pdf' | 'csv') => {
+    if (!stationId) {
+      toast.error('Select a station first.');
+      return;
+    }
+    setDownloading(format);
+    try {
+      const buffer = await downloadStationReportRequest(stationId, format, startDate, endDate);
+      const mimeType = format === 'csv' ? 'text/csv' : 'application/pdf';
+      const blob = new Blob([buffer], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `station-report.${format}`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('Station report downloaded.');
+    } catch {
+      toast.error('Failed to download station report.');
+    } finally {
+      setDownloading(null);
+    }
+  };
+
+  const isDisabled = !outreachId;
+
+  return (
+    <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-br from-sky-500/10 to-sky-600/5 bg-white/50 dark:bg-black/20 backdrop-blur-sm p-6 shadow-sm transition-all duration-300 hover:shadow-md">
+      <div className="flex items-start gap-4">
+        <div className="p-3 rounded-xl bg-sky-500/10 text-sky-600 flex-shrink-0">
+          <Building2 className="w-5 h-5" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="text-base font-semibold text-foreground">Station Report</h3>
+          <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
+            Patient visits and timing for a specific station (e.g. Ophthalmology, Laboratory). Includes arrival/departure times and average duration.
+          </p>
+
+          <div className="mt-3 flex items-center gap-2 flex-wrap">
+            {(['pdf', 'csv'] as const).map((fmt) => (
+              <Badge key={fmt} variant="outline" className="text-xs font-mono uppercase">
+                {fmt}
+              </Badge>
+            ))}
+          </div>
+
+          {isDisabled ? (
+            <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+              Select an outreach to enable this report.
+            </p>
+          ) : (
+            <div className="mt-3 w-full max-w-xs">
+              <Select value={stationId} onValueChange={setStationId}>
+                <SelectTrigger className="h-9 rounded-xl text-sm bg-white/50 dark:bg-black/50 border-border">
+                  <SelectValue placeholder="Select a station…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {stations.map((s: any) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          <div className="mt-4 flex gap-2 flex-wrap">
+            {(['pdf', 'csv'] as const).map((fmt) => (
+              <Button
+                key={fmt}
+                size="sm"
+                variant={fmt === 'pdf' ? 'default' : 'outline'}
+                disabled={isDisabled || !stationId || downloading !== null}
+                onClick={() => handleDownload(fmt)}
+                className="gap-1.5"
+              >
+                {downloading === fmt ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Download className="w-3.5 h-3.5" />
+                )}
+                {fmt.toUpperCase()}
+              </Button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ReportsScreen() {
   const { activeOutreachId, activeOutreach } = useAppSelector(
     (state) => state.outreachContext,
@@ -295,6 +442,19 @@ export default function ReportsScreen() {
             endDate={endDate || undefined}
           />
         ))}
+      </div>
+
+      <div>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          Station-Level Reports
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <StationReportCard
+            outreachId={activeOutreachId}
+            startDate={startDate || undefined}
+            endDate={endDate || undefined}
+          />
+        </div>
       </div>
 
       <p className="text-xs text-muted-foreground italic">
